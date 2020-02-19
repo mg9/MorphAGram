@@ -182,11 +182,11 @@ def parse_seg(file, morphs):
                             e = h.find(")")
                             ch = convert_hex_to_string(h[:e])
                             # Verify if Stem "(" or ")" is necessary.
-                            if re.match("^Stem*", curr_morph) and not stem_open:
+                            if re.match(r'^Stem#[0-9]+', curr_morph) and not stem_open:
                                 stem_open = True
                                 if len(word)==0:
                                     word += "("
-                            elif re.match("^Stem*", curr_morph) is None and stem_open:
+                            elif re.match(r'^Stem#[0-9]+', curr_morph) is None and stem_open:
                                 stem_open = False
                                 word += ")"
                             # Add "+" if a change of current morpheme has occurred.
