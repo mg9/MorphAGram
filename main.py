@@ -197,13 +197,9 @@ def parse_seg(file, morphs):
                                     word += "("
                                 morph_change = False
                                 ch_added = False
-                            # Remove trailing new line character if necessary.
-                            if list(ch)[0] == '\x00':
-                                word += str(list(ch)[1])
-                                ch_added = True
-                            else:
-                                word += ch
-                                ch_added = True
+                            # Add character to word.
+                            word += ch
+                            ch_added = True
                             morph_change = False
                         if last_ch == '$'or len(inner_child) == 0:
                             if stem_open:
@@ -259,14 +255,8 @@ def affix_analyzer(file, n, morphs):
                             h = field.split()[1]
                             e = h.find(")")
                             ch = convert_hex_to_string(h[:e])
-
-                            # Remove trailing new line character if necessary.
-                            if list(ch)[0] == '\x00':
-                                affix += str(list(ch)[1])
-                            else:
-                                affix += ch
+                            affix += ch
                         if last_ch == '$' or len(inner_child) == 0:
-                            print(affix)
                             if prefix:
                                 if affix in prefix_counter:
                                     prefix_counter[affix] += 1
