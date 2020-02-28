@@ -271,6 +271,7 @@ def affix_analyzer(file, n, morphs):
     n_affixes = []
     p = 0  # index for prefix_list_sorted
     s = 0  # index for suffix_list_sorted
+
     while n > 0:
         if prefix_list_sorted[p][1] > suffix_list_sorted[s][1]:
             n_affixes.append(prefix_list_sorted[p][0])
@@ -280,8 +281,7 @@ def affix_analyzer(file, n, morphs):
             s += 1
         n -= 1
 
-    return n_affixes, prefix_counter, suffix_counter
-
+    return n_affixes, prefix_list_sorted[:p], suffix_list_sorted[:s]
 
 if __name__ == '__main__':
     main()
