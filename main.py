@@ -1,3 +1,4 @@
+import string
 import sys
 import argparse
 import re
@@ -138,10 +139,9 @@ def read_linguistic_knowledge(lk_file):
     return prefixes, suffixes
 
 
-def convert_morph_tree_to_word(fields, morphs):
+def convert_morph_tree_to_word(nonterminals, morphs):
     '''
-
-    :param fields: all morphemes in the grammar morph tree of a word (example: "(Word (Prefix (...) Stem (...)))")
+    :param nonterminals: all morphemes in the grammar morph tree of a word (example: "(Word (Prefix (...) Stem (...)))")
     :param morphs: RegEx specifiying which morphs to parse by.
     :return: a list of affixes and their respective morph type
     '''
@@ -151,9 +151,9 @@ def convert_morph_tree_to_word(fields, morphs):
     all_morphs = []
     morph = ""
     last_popped_morph = ""
-    # Search for a field match with a morph RegEx given as input.
-    for field in fields:
-        m = field.split()
+    # Search for a nonterminal match with a morph RegEx given as input.
+    for nonterminal in nonterminals:
+        m = nonterminal.split()
         # Keep track of children and current morpheme.
         rgx = r'^' + morphs + r'(#[0-9]*)?$'
         r = re.search(rgx, m[0])
@@ -170,8 +170,8 @@ def convert_morph_tree_to_word(fields, morphs):
             else:
                 inner_children.append(m[0])
             # Pop all ")".
-            if ")" in field:
-                f = list(field)
+            if ")" in nonterminal:
+                f = list(nonterminal)
                 f.pop()  # Pop '/n' character.
                 while ")" in f:
                     last_ch = f.pop()
@@ -179,7 +179,7 @@ def convert_morph_tree_to_word(fields, morphs):
                         last_popped_morph = inner_children.pop()
                     if last_popped_morph == "Char":
                         # Parse to hex value and convert.
-                        h = field.split()[1]
+                        h = nonterminal.split()[1]
                         e = h.find(")")
                         ch = convert_hex_to_string(h[:e])
                         # Add character to word.
@@ -194,64 +194,95 @@ def convert_morph_tree_to_word(fields, morphs):
     return all_morphs
 
 
-def extract_all_words(file, morphs):
+def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word_file):
     '''
-    This function parses the output of the word morphologies into
-    a human-readable format that denotes a word split into its morphemes
+    This function parses the output of the segmented_word morphologies into
+    a human-readable format that denotes a segmented_word split into its morphemes
     separated by a '+' character and converting hex denoted characters
     into their respective unicode symbol. It writes these conversions
-    into a file.
+    into 2 files: one file contains only the word segmentations, the other contains
+    the segmentation along with its respective word.
 
     :param file: a txt file that contains each words' morphology trees
     :param morphs: a RegEx that denotes the morphemes that will be denoted in the final
     output
-    :return all words parsed by affix (example: "ir+re+(place)+able+s")
+    :param segmented_text_file: file location to write all word segmentations
+    :param segmented_text_and_word_file: file location to write all word segmentations and their respective word
+    :return map of words and their respective parsings by affix (example: "irreplaceables" : "ir+re+(place)+able+s")
     '''
-    output = []
+    word_segmentation_map = []
+    segmented_word_list = []
 
     for line in open(file, 'r'):
         fields = line.split('(')
         # Search for a field match with a morph RegEx given as input.
         all_morphs = convert_morph_tree_to_word(fields[1:], morphs)
         # Append affixes together separated by a "+".
-        word = ""
+        segmented_word = ""
+        full_word = ""
         for morph in all_morphs:
+            full_word += morph[1]
             # Append "+".
-            if word != "":
-                word += "+"
+            if segmented_word != "":
+                segmented_word += "+"
             # Enclose "Stem#[0-9]+" type morphs in "( ... )"
             morph_type = morph[0]
             is_stem = re.match(r'^Stem#[0-9]+', morph_type)
             if is_stem:
-                word += "("
-            word += morph[1]
+                segmented_word += "("
+            segmented_word += morph[1]
             if is_stem:
-                word += ")"
-        output.append(word)
-    return output
+                segmented_word += ")"
+        if word_segmentation_map.get(full_word) is None:
+            word_segmentation_map[full_word] = segmented_word
+        segmented_word_list.append((full_word, segmented_word))
 
+    # Write all segmented words to segmented_text_file.
+    include_word = False
+    write_word_segmentations_to_file(segmented_text_file, include_word, segmented_word_list)
 
-def affix_analyzer(file, n, morphs):
+    # Write words and their respective segmentation to segmented_text_and_word_file.
+    include_word = True
+    write_word_segmentations_to_file(segmented_text_and_word_file, include_word, segmented_word_list)
+
+    return word_segmentation_map
+
+def write_word_segmentations_to_file(file, include_word, word_list):
+    '''
+    Writes word segmentations to file provided as input.
+    :param file: File to write to
+    :param include_word: Boolean whether to write non-segmented word to file
+    :param word_list: list of words to write
+    '''
+    f = open(file, "w")
+    for w in word_list:
+        new_line = ""
+        if include_word:
+            new_line += w[0] + "\t"
+        new_line += w[1]
+        f.write(new_line)
+    f.close()
+
+def analyze_affixes(file, n, prefix_marker, suffix_marker):
     '''
     :param file: file containing grammar morph tree for each word.
     :param n: number indicating how many of the top affixes to return.
-    :param morphs: RegEx of morphs to parse for (example: "(Prefix|Suffix)")
+    :param prefix_marker: name of the prefix nonterminal to search for
+    :param suffix_marker: name of the suffix nonterminal to search for
     :return: top n affixes, all prefixes and their counts, all suffixes and their counts
     '''
     prefix_counter = {}
     suffix_counter = {}
 
-    pre = morphs.split("|")[0]
-    pre = pre[1:]
-
     for line in open(file, 'r'):
         fields = line.split('(')
-        # Search for a field match with a morph RegEx given as input.
+        # Search for a nonterminal match with a morph RegEx given as input.
+        morphs = "(" + prefix_marker + "|" + suffix_marker + ")"
         all_morphs = convert_morph_tree_to_word(fields[1:], morphs)
         # Separate into respective affix counter.
         for morph in all_morphs:
             morph_type = morph[0]
-            is_prefix = re.match(r'^Prefix', morph_type)
+            is_prefix = re.match(prefix_marker, morph_type)
             if is_prefix:
                 if prefix_counter.get(morph[1]):
                     prefix_counter[morph[1]] += 1
@@ -272,16 +303,331 @@ def affix_analyzer(file, n, morphs):
     p = 0  # index for prefix_list_sorted
     s = 0  # index for suffix_list_sorted
 
+    # Final list of x prefixes and y suffixes such that x+y=n
+    prefix_x = []
+    suffix_y = []
+
+    # If prefix and suffix lists were empty, return empty lists
+    if len(prefix_list_sorted) == len(suffix_list_sorted) == 0:
+        return n_affixes, prefix_x, suffix_y
+
     while n > 0:
-        if prefix_list_sorted[p][1] > suffix_list_sorted[s][1]:
+        if len(prefix_list_sorted) > 0 and (len(suffix_list_sorted) == 0 or
+                                            prefix_list_sorted[p][1] > suffix_list_sorted[s][1]):
             n_affixes.append(prefix_list_sorted[p][0])
+            prefix_x.append(prefix_list_sorted[p][0])
             p += 1
         else:
             n_affixes.append(suffix_list_sorted[s][0])
+            suffix_y.append(suffix_list_sorted[s][0])
             s += 1
         n -= 1
 
-    return n_affixes, prefix_list_sorted[:p], suffix_list_sorted[:s]
+    return n_affixes, prefix_x, suffix_y
+
+def insert_splits(word, count, solutions):
+    '''
+    Function to insert "+" in word count times. Returns every solution that does not have an empty stem.
+    '''
+    # If count == 0, no more insertions necessary. Append current solution and return.
+    if count == 0:
+        solutions.append(word)
+        return solutions
+    # Add a "+" in all possible places
+    for i in range(len(word)):
+        # Construct new split.
+        new_split = word[:i] + "+" + word[i:]
+        # Ignore instances of empty morphs. (for example: "e++xample" will be ignored)
+        if "++" in new_split:
+            continue
+        # Call recursively with a decremented count.
+        insert_splits(new_split, count-1, solutions)
+
+    return solutions
+
+def count_affixes_from_segmented_word(affix_morphs, affix_count):
+    '''
+    This method is a helper function that keeps track of all instances of morphs. Used to pre-process text.
+    :param affix_morphs: String sequence of morphs to be counted.
+    :param affix_count: Dictionary of all seen morphs and their counts.
+    '''
+    if affix_morphs == "":
+        if "empty" in affix_count:
+            affix_count["empty"] += 1
+            return
+        else:
+            affix_count["empty"] = 1
+            return
+    all_affixes = affix_morphs.split("+")  # List of affixes ex. ['over', 're'].
+    joint_affixes = "".join(all_affixes)  # Join all prefixes ex. overre.
+    if affix_count.get(joint_affixes):
+        if affix_count[joint_affixes].get(affix_morphs):
+            affix_count[joint_affixes][affix_morphs] += 1
+        else:
+            affix_count[joint_affixes][affix_morphs] = 1
+    else:
+        affix_count[joint_affixes] = {affix_morphs: 1}
+    return
+
+def count_stems_from_segmented_word(segmented_word, stem_count):
+    '''
+    Helper function that counts all instances of seen stems.
+    :param segmented_word: String sequence of morphs separated by "+".
+    :param stem_count: Dictionary of all instances of stems and their counts.
+    '''
+    if segmented_word == "":
+        if "empty" in stem_count:
+            stem_count["empty"] += 1
+        else:
+            stem_count["empty"] = 1
+    while "(" in segmented_word:  # There may be multiple stems in a word. If so, they are all separate entries in map.
+        p_open = segmented_word.find("(")
+        p_close = segmented_word.find(")")
+        stem_morph = segmented_word[p_open+1:p_close]
+        if stem_morph in stem_count:
+            stem_count[stem_morph] += 1
+        else:
+            stem_count[stem_morph] = 1
+        segmented_word = segmented_word[p_close+1:]
+    return
+
+def count_affixes_from_dictionary(dic):
+    '''
+    Helper function that pre-processes all counts of all affixes in language dictionary.
+    :param dic: Dictionary of all words (presumably a comprehensive dictionary of a language) and their corresponding
+    morphs (ex: {"irreplaceables": "ir+re+place+able+s"}
+    :return: 3 dictionaries: 1) All prefix instances and their counts 2) All stem instances and their counts 3) All
+    suffix instances and their counts.
+    '''
+    prefix_count = {}
+    stem_count = {}
+    suffix_count = {}
+
+    for item in dic.items():
+        segmented_word = item[1]
+        full_word = item[0]
+
+        # If prefix exists, count and store prefixes.
+        if "+(" in segmented_word:
+            morphs = segmented_word.split("+(")
+            prefix_morphs = morphs[0] # morphs[0] contains sequence of prefixes ex. over+re+(act) --> over+re.
+            count_affixes_from_segmented_word(prefix_morphs, prefix_count)
+        else:
+            count_affixes_from_segmented_word("", prefix_count)
+
+        # If stem exists, count and store stems.
+        if "(" in segmented_word:
+            count_stems_from_segmented_word(segmented_word, stem_count)
+        else:
+            count_stems_from_segmented_word(segmented_word, stem_count)
+
+        # If suffix exists, count and store suffixes.
+        if ")+" in segmented_word:
+            morphs = segmented_word.split(")+")
+            # If there are multiple stems, you want to take the last found instance ex. (abc)+(def)+xyz.
+            suffix_morphs = morphs[len(morphs)-1]
+            if ")" in suffix_morphs: # No suffix exists. ex. (abc)+(def).
+                continue
+            count_affixes_from_segmented_word(suffix_morphs, suffix_count)
+        else:
+            count_stems_from_segmented_word("", suffix_count)
+
+    return prefix_count, stem_count, suffix_count
+
+def count_total_affixes(affix_count):
+    '''
+    Helper that counts the total number of affixes.
+    :param affix_count: A dictionary containing all counts of all instances of an affix sequence
+    (ex: "redis": {"re+dis": 5, "red+is": 1})
+    :return: an integer total of all affix sequences seen, a dictionary containing just the total counts of a given
+    sequence (Using the above example:  6, {"redis": 6})
+    '''
+    TOTAL = 0
+    total_affix_count = {}
+    for affix, dic in affix_count.items():
+        if affix == "empty":
+            continue
+        affix_sum = sum(dic.values())
+        total_affix_count[affix] = affix_sum
+        TOTAL += affix_sum
+
+    return TOTAL, total_affix_count
+
+def restore_casing(segmented_word, casing):
+    '''
+    Helper function that restores the casing seen in plaintext file.
+    :param segmented_word: String morph sequence separated by "+".
+    :param casing: List of booleans for all characters in segmented_word; True = lowercase False = uppercase
+    :return: segmented_word with proper casings
+    '''
+    n = 0 # casing index
+    restored_segmented_word = ""
+    for ch in segmented_word:
+        if ch == "+" or ch == "(" or ch == ")" or ch == '̇':
+            restored_segmented_word += ch
+            # Do not increment n.
+            continue
+        if not casing[n]:
+            new_ch = ch.upper()
+            restored_segmented_word += new_ch
+        else:
+            restored_segmented_word += ch
+        n += 1
+
+    return restored_segmented_word
+
+
+def calculate_MLE(candidate, affix_counts, affix_totals):
+    '''
+    This function calculates the Maximum Likelihood Estimator for every segmented word candidate.
+    :param candidate: Segmented word candidate. Always in form of 2 segments, where middle segment is a stem.
+        ex. +(kid)+s or k+(id)+s
+    :param affix_counts: A list of total numbers (one for each Prefix, Stem, and Suffix) of all affixes.
+    :param affix_totals: A list of dictionaries (one for each Prefix, Stem, and Suffix) containing total counts for each
+        affix.
+    :return: MLE integer
+    '''
+    MLE = 1
+    EMPTY = "empty"
+
+    morphs = candidate.split("+")
+    for x in range(3):
+        # x = 0 --> Prefix; x = 1 --> Stem; x = 2 --> Suffix
+        affix_morphs = morphs[x]
+        #if x == 1:
+        #    affix_morphs = affix_morphs[1:len(affix_morphs)-1] # Remove parentheses if necessary.
+        affix_count = affix_counts[x]
+        affix_total = affix_totals[x]
+        if affix_morphs is "":
+            affix_morphs = EMPTY
+        if affix_morphs in affix_count:
+            p_count = affix_count[affix_morphs]
+        else: # candidate morph is not in the affix map
+            p_count = 0
+        MLE *= (p_count / affix_total)
+    return MLE
+
+
+def insert_parentheses(segmented_word):
+    '''
+    Helper function that takes segmented_word and adds a parentheses around the middle morph=Stem
+    :param segmented_word: String sequence of morphs
+    :return: segmented_word with parentheses around stem
+    '''
+    if "(" not in segmented_word:
+        # Find first "+" and add "(" at the end.
+        p_op = segmented_word.find("+")
+        new_segmented_word = segmented_word[:p_op+1]
+        new_segmented_word += "("
+        # Find second "+" and add ")" at the end.
+        next_segment = segmented_word[p_op+1:]
+        p_cl = next_segment.find("+")
+        new_segmented_word += next_segment[:p_cl]
+        new_segmented_word += ")"
+        # Add remainder of the word.
+        new_segmented_word += next_segment[p_cl:]
+        return new_segmented_word
+    else:
+        return segmented_word
+
+
+def split_morphs_into_submorphs(segmented_word, affix_maps):
+    '''
+    Helper function that takes a segmented_word (separated into Prefix, Stem, Suffix) and splits each affix into
+    submorphs if it exists.
+    :param segmented_word: String sequence of morphs separated by "+".
+    :param affix_maps: List of dictionaries (one for each Prefix, Stem, Suffix) that contains subdivisions of morphs
+    :return: segmented_word where each morph has been split into submorphs
+    '''
+    morphs = segmented_word.split("+")
+    new_morph = []
+    start = 0
+    end = len(affix_maps)
+    if len(morphs) <= 1:
+        return segmented_word
+    elif len(morphs) == 2:
+        if "+(" in segmented_word:
+            end = 2
+        elif ")+" in segmented_word:
+            start = 1
+        else:
+            return segmented_word
+    for x in range(start, end):
+        affix_map = affix_maps[x]
+        morph = morphs[x]
+        if x == 1:
+            morph = morph[1:len(morph)-1]
+        if morph in affix_map:
+            if type(affix_map[morph]) == int:
+                new_morph.append(morphs[x])
+                continue
+            else:
+                all_splits = affix_map[morph]
+                all_splits_sorted = sorted(all_splits.items(), key=lambda x: x[1], reverse=True)
+                new_morph.append(all_splits_sorted[0][0])
+    return "+".join(new_morph)
+
+def replace_words_with_segmentations(dic, txt_file, multiway_segmentaion):
+    SEGMENT_COUNT = 2
+    output_file = "output/output.txt"
+    f_output = open(output_file, "w", encoding='utf-8')
+
+    # Pre-process dictionary to count all affixes (Prefix, Stem, and Suffix).
+    prefix_map, stem_map, suffix_map = count_affixes_from_dictionary(dic)
+    prefix_total, prefix_counts = count_total_affixes(prefix_map)
+    suffix_total, suffix_counts = count_total_affixes(suffix_map)
+    stem_total = sum(stem_map.values())
+    affix_maps = [prefix_map, stem_map, suffix_map]
+    affix_counts = [prefix_counts, stem_map, suffix_counts]
+    affix_totals = [prefix_total, stem_total, suffix_total]
+
+    for line in open(txt_file, "r", encoding='utf-8'):
+        words = line.split()
+        new_line = [] # List containing all the segmented replacements of word in original line.
+        for word in words:
+            # Save casing of all characters in a word.
+            casing = [ch.islower() for ch in word]
+            word_low = word.lower()
+            # If word already exists in dictionary, replace with existing segmentation.
+            if word_low in dic:
+                segmented_word = dic[word_low]
+                segmented_word = restore_casing(segmented_word, casing)
+                new_line.append(segmented_word)
+                continue
+            elif len(word_low) == 1 and word_low in string.punctuation:
+                punctuation = "("
+                punctuation += word_low + ")"
+                new_line.append(punctuation)
+                continue
+
+            # Deduce segmentation from existing affixes.
+            all_possible_splits = insert_splits(word_low, SEGMENT_COUNT, [])
+            candidate_score_tracker = {}
+            for candidate in all_possible_splits:
+                score = calculate_MLE(candidate, affix_counts, affix_totals)
+                candidate_score_tracker[candidate] = score
+            candidate_list_sorted = sorted(candidate_score_tracker.items(), key=lambda x: x[1], reverse=True)
+
+            # Choose highest-scoring candidate and return to original casing.
+            if len(candidate_list_sorted) == 0 or candidate_list_sorted[0][1] == 0.0:
+                segmented_word = "(" + word_low + ")"
+            else:
+                segmented_word = candidate_list_sorted[0][0]
+            segmented_word = insert_parentheses(segmented_word)
+            segmented_word = restore_casing(segmented_word, casing)
+
+            # If multiway_segmentation is True, further split prefixes and affixes into sub-affixes if applicable.
+            # For example: irre+(place)+ables --> ir+re+(place)+able+s
+            if multiway_segmentaion:
+                segmented_word = split_morphs_into_submorphs(segmented_word, affix_maps)
+
+            new_line.append(segmented_word)
+        full_line = " ".join(new_line)
+        full_line += '\n'
+        f_output.write(full_line)
+
+    f_output.close()
+    return
 
 if __name__ == '__main__':
     main()
