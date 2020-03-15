@@ -210,7 +210,7 @@ def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word
     :param segmented_text_and_word_file: file location to write all word segmentations and their respective word
     :return map of words and their respective parsings by affix (example: "irreplaceables" : "ir+re+(place)+able+s")
     '''
-    word_segmentation_map = []
+    word_segmentation_map = {}
     segmented_word_list = []
 
     for line in open(file, 'r'):
@@ -243,7 +243,7 @@ def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word
 
     # Write words and their respective segmentation to segmented_text_and_word_file.
     include_word = True
-    write_word_segmentations_to_file(segmented_text_and_word_file, include_word, segmented_word_list)
+    write_word_segmentations_to_file(segmented_text_and_word_file, include_word, word_segmentation_map.items())
 
     return word_segmentation_map
 
