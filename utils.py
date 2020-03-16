@@ -8,7 +8,7 @@ def convert_string_to_hex_chars(string):
 
 
 def convert_hex_to_string(hex):
-    s = bytes.fromhex(hex).decode()
+    s = bytes.fromhex(hex).decode('utf-8')
     # Remove trailing new line character if necessary.
     if list(s)[0] == '\x00':
         return str(list(s)[1])

@@ -139,60 +139,72 @@ def read_linguistic_knowledge(lk_file):
     return prefixes, suffixes
 
 
-def convert_morph_tree_to_word(nonterminals, morphs):
+def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
     '''
-    :param nonterminals: all morphemes in the grammar morph tree of a word (example: "(Word (Prefix (...) Stem (...)))")
-    :param morphs: RegEx specifiying which morphs to parse by.
-    :return: a list of affixes and their respective morph type
-    '''
-    curr_morph = ""
-    global_morph = []
-    inner_children = []
-    all_morphs = []
+        :param word_nonterminals: List of all nonterminals in the grammar morph tree of a word.
+        (ex: ["Word", "Prefix#1", ...])
+        :param nonterminals_to_parse: RegEx specifiying which nonterminals to parse by (ex: "Prefix|Stem|Suffix").
+        :return: a list of affixes and their respective morph type
+        '''
+
+    if nonterminals_to_parse == "Char":
+        nonterminals_to_parse = "Chars"
+
+    curr_morph = "" # Keeps track of current morph in word_nonterminals list when iterating.
+    global_nonterminal = [] # Keeps track of nonterminal being searched for.
+    inner_children = [] # Keeps tracks of nonterminal children in
+    all_morphs = [] # Keeps
     morph = ""
     last_popped_morph = ""
+    to_parse = nonterminals_to_parse.split('|')
     # Search for a nonterminal match with a morph RegEx given as input.
-    for nonterminal in nonterminals:
-        m = nonterminal.split()
-        # Keep track of children and current morpheme.
-        rgx = r'^' + morphs + r'(#[0-9]*)?$'
-        r = re.search(rgx, m[0])
-        if morph and (len(global_morph) == 0 or r):
-            new_morph = (curr_morph, morph)
-            all_morphs.append(new_morph)
-            morph = ""
-            curr_morph = ""
-        if r:
-            curr_morph = m[0]
-        if curr_morph is not "":
-            if m[0] == curr_morph:
-                global_morph.append(m[0])
-            else:
-                inner_children.append(m[0])
-            # Pop all ")".
-            if ")" in nonterminal:
-                f = list(nonterminal)
-                f.pop()  # Pop '/n' character.
-                while ")" in f:
-                    last_ch = f.pop()
-                    if len(inner_children):
-                        last_popped_morph = inner_children.pop()
-                    if last_popped_morph == "Char":
-                        # Parse to hex value and convert.
-                        h = nonterminal.split()[1]
-                        e = h.find(")")
-                        ch = convert_hex_to_string(h[:e])
-                        # Add character to word.
-                        morph += ch
-                    if last_ch == '$' or len(inner_children) == 0:
-                        if ")" in f and global_morph:
-                            global_morph.pop()
-                        break
+    for curr_nonterminal in to_parse:
+        for nonterminal in word_nonterminals:
+            m = nonterminal.split()
+            # Keep track of children and current morph.
+            rgx = r'^' + curr_nonterminal + r'(#[0-9]+)?$'
+            r = re.search(rgx, m[0])
+            # Store information of current morph if necessary.
+            if morph and (len(global_nonterminal) == 0 or r):
+                new_morph = (curr_morph, morph)
+                all_morphs.append(new_morph)
+                morph = ""
+                curr_morph = ""
+            # Update current morph to search for if different from previous iteration.
+            if r:
+                curr_morph = m[0]
+            if curr_morph is not "":
+                if m[0] == curr_morph:
+                    global_nonterminal.append(m[0])
+                else:
+                    inner_children.append(m[0])
+                # Pop all ")".
+                if ")" in nonterminal:
+                    f = list(nonterminal)
+                    f.pop()  # Pop '/n' character.
+                    while ")" in f:
+                        last_ch = f.pop()
+                        if len(inner_children):
+                            last_popped_morph = inner_children.pop()
+                        else:
+                            global_nonterminal.pop()
+                            curr_morph = ""
+                            break
+                        if last_popped_morph == "Char":
+                            # Parse to hex value and convert.
+                            h = nonterminal.split()[1]
+                            e = h.find(")")
+                            ch = convert_hex_to_string(h[:e])
+                            # Add character to word.
+                            morph += ch
+                        if last_ch == '$' or len(inner_children) == 0:
+                            if ")" in f and global_nonterminal:
+                                global_nonterminal.pop()
+                            break
     if morph:
         new_morph = (curr_morph, morph)
         all_morphs.append(new_morph)
     return all_morphs
-
 
 def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word_file):
     '''
