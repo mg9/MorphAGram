@@ -224,12 +224,12 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
     '''
     word_segmentation_map = {}
     segmented_word_list = []
-
-    for line in open(file, 'r'):
+    to_parse = nonterminals_to_parse[1:len(nonterminals_to_parse) - 1]  # Remove parentheses.
+    
+    for line in open(file, 'r', encoding='utf-8'):
         fields = line.split('(')
         # Search for a field match with a morph RegEx given as input.
-        nonterminals_to_parse = nonterminals_to_parse[1:len(nonterminals_to_parse)-1] # Remove parentheses.
-        all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
+        all_morphs = convert_morph_tree_to_word(fields[1:], to_parse)
         # Append affixes together separated by a "+".
         segmented_word = ""
         full_word = ""
@@ -267,12 +267,12 @@ def write_word_segmentations_to_file(file, include_word, word_list):
     :param include_word: Boolean whether to write non-segmented word to file
     :param word_list: list of words to write
     '''
-    f = open(file, "w")
+    f = open(file, "w", encoding='utf-8')
     for w in word_list:
         new_line = ""
         if include_word:
             new_line += w[0] + "\t"
-        new_line += w[1]
+        new_line += w[1] + '\n'
         f.write(new_line)
     f.close()
 
@@ -489,7 +489,6 @@ def restore_casing(segmented_word, casing):
 
     return restored_segmented_word
 
-
 def calculate_MLE(candidate, affix_counts, affix_totals):
     '''
     This function calculates the Maximum Likelihood Estimator for every segmented word candidate.
@@ -520,7 +519,6 @@ def calculate_MLE(candidate, affix_counts, affix_totals):
         MLE *= (p_count / affix_total)
     return MLE
 
-
 def insert_parentheses(segmented_word):
     '''
     Helper function that takes segmented_word and adds a parentheses around the middle morph=Stem
@@ -542,7 +540,6 @@ def insert_parentheses(segmented_word):
         return new_segmented_word
     else:
         return segmented_word
-
 
 def split_morphs_into_submorphs(segmented_word, affix_maps):
     '''
@@ -642,5 +639,7 @@ def replace_words_with_segmentations(dic, txt_file, multiway_segmentaion):
     f_output.close()
     return
 
-if __name__ == '__main__':
-    main()
+print(extract_all_words("examples/turkish-output1.txt", "(PrefixMorph|Stem|SuffixMorph)", r"C:\Users\Fran Callejas\Documents\CU Semester Files\2020 Spring\Morph_A_Gram\output\word_segmented.txt", r"C:\Users\Fran Callejas\Documents\CU Semester Files\2020 Spring\Morph_A_Gram\output\map.txt"))
+
+# if __name__ == '__main__':
+#     main()
