@@ -206,7 +206,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         all_morphs.append(new_morph)
     return all_morphs
 
-def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word_file):
+def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmented_text_and_word_file):
     '''
     This function parses the output of the segmented_word morphologies into
     a human-readable format that denotes a segmented_word split into its morphemes
@@ -216,7 +216,7 @@ def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word
     the segmentation along with its respective word.
 
     :param file: a txt file that contains each words' morphology trees
-    :param morphs: a RegEx that denotes the morphemes that will be denoted in the final
+    :param nonterminals_to_parse: a RegEx that denotes the nontermials that will be parsed and returned in the final
     output
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_text_and_word_file: file location to write all word segmentations and their respective word
@@ -228,7 +228,8 @@ def extract_all_words(file, morphs, segmented_text_file, segmented_text_and_word
     for line in open(file, 'r'):
         fields = line.split('(')
         # Search for a field match with a morph RegEx given as input.
-        all_morphs = convert_morph_tree_to_word(fields[1:], morphs)
+        nonterminals_to_parse = nonterminals_to_parse[1:len(nonterminals_to_parse)-1] # Remove parentheses.
+        all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
         # Append affixes together separated by a "+".
         segmented_word = ""
         full_word = ""
@@ -289,8 +290,8 @@ def analyze_affixes(file, n, prefix_marker, suffix_marker):
     for line in open(file, 'r'):
         fields = line.split('(')
         # Search for a nonterminal match with a morph RegEx given as input.
-        morphs = "(" + prefix_marker + "|" + suffix_marker + ")"
-        all_morphs = convert_morph_tree_to_word(fields[1:], morphs)
+        nonterminals_to_parse = prefix_marker + "|" + suffix_marker
+        all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
         # Separate into respective affix counter.
         for morph in all_morphs:
             morph_type = morph[0]
