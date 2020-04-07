@@ -206,7 +206,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         all_morphs.append(new_morph)
     return all_morphs
 
-def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmented_text_and_word_file):
+def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file):
     '''
     This function parses the output of the segmented_word morphologies into
     a human-readable format that denotes a segmented_word split into its morphemes
@@ -219,13 +219,13 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
     :param nonterminals_to_parse: a RegEx that denotes the nontermials that will be parsed and returned in the final
     output
     :param segmented_text_file: file location to write all word segmentations
-    :param segmented_text_and_word_file: file location to write all word segmentations and their respective word
+    :param segmented_dictionary_file: file location to write all word segmentations and their respective word
     :return map of words and their respective parsings by affix (example: "irreplaceables" : "ir+re+(place)+able+s")
     '''
     word_segmentation_map = {}
     segmented_word_list = []
     to_parse = nonterminals_to_parse[1:len(nonterminals_to_parse) - 1]  # Remove parentheses.
-    
+
     for line in open(file, 'r', encoding='utf-8'):
         fields = line.split('(')
         # Search for a field match with a morph RegEx given as input.
@@ -256,7 +256,7 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
 
     # Write words and their respective segmentation to segmented_text_and_word_file.
     include_word = True
-    write_word_segmentations_to_file(segmented_text_and_word_file, include_word, word_segmentation_map.items())
+    write_word_segmentations_to_file(segmented_dictionary_file, include_word, word_segmentation_map.items())
 
     return word_segmentation_map
 
@@ -577,9 +577,23 @@ def split_morphs_into_submorphs(segmented_word, affix_maps):
                 new_morph.append(all_splits_sorted[0][0])
     return "+".join(new_morph)
 
-def replace_words_with_segmentations(dic, txt_file, multiway_segmentaion):
+def replace_words_with_segmentations(dic, txt_file, output_file, multiway_segmentaion):
+    '''
+    This function morphologically segments all words in a given plaintext file.
+    :param dic: dictionary containing a list of words in the given language.
+    It is assumed to be a comprehensive dictionary of the language.
+    :param txt_file: plaintext file containing a tokenized sequence of words.
+    (All punctuation marks are separated from words by whitespace such as:
+    "The dog ' s bowl is empty . ")
+    :param output_file: file to write output to
+    :param multiway_segmentaion: boolean value;
+        if value is false, the segmented word will contain a three-way split
+        (Prefix+Stem+Suffix)
+        if value is true, the segmented word will contain a multi-way split
+        if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
+    :return:
+    '''
     SEGMENT_COUNT = 2
-    output_file = "output/output.txt"
     f_output = open(output_file, "w", encoding='utf-8')
 
     # Pre-process dictionary to count all affixes (Prefix, Stem, and Suffix).
@@ -639,7 +653,35 @@ def replace_words_with_segmentations(dic, txt_file, multiway_segmentaion):
     f_output.close()
     return
 
-print(extract_all_words("examples/turkish-output1.txt", "(PrefixMorph|Stem|SuffixMorph)", r"C:\Users\Fran Callejas\Documents\CU Semester Files\2020 Spring\Morph_A_Gram\output\word_segmented.txt", r"C:\Users\Fran Callejas\Documents\CU Semester Files\2020 Spring\Morph_A_Gram\output\map.txt"))
+def segment_words(grammar_output_file, morph_pattern, segmented_text_file,
+                  segmented_dictionary_file, to_parse_file, output_file,
+                  multiway_segmentation=False):
+    '''
+    Function that takes the output of a word grammar file, creates a segmented
+    word dictionary from its output, and uses these to replace the words in a
+    text file with their segmented version. This function is a wrapper to the
+    functions: extract_all_words and replace_words_with_segmentations
+    :param grammar_output_file: a txt file that contains each words' morphology trees
+    :param morph_pattern: a RegEx that denotes the nontermials that will be parsed
+    and returned in the final output
+    :param segmented_text_file: file location to write all word segmentations
+    :param segmented_dictionary_file: file location to write all word segmentations
+    and their respective word
+    :param to_parse_file: plaintext file containing a tokenized sequence of words.
+    (All punctuation marks are separated from words by whitespace such as:
+    "The dog ' s bowl is empty . ")
+    :param output_file: file to write output to
+    :param multiway_segmentation: boolean value;
+        if value is false, the segmented word will contain a three-way split
+        (Prefix+Stem+Suffix)
+        if value is true, the segmented word will contain a multi-way split
+        if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
+    :return:
+    '''
+    map = extract_all_words(grammar_output_file, morph_pattern, segmented_text_file, segmented_dictionary_file)
+    replace_words_with_segmentations(map, to_parse_file, output_file, multiway_segmentation)
+    return
 
-# if __name__ == '__main__':
-#     main()
+
+if __name__ == '__main__':
+    main()
