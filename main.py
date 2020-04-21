@@ -211,7 +211,8 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         all_morphs.append(new_morph)
     return all_morphs
 
-def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file):
+def extract_all_words(file, min_stem_length, nonterminals_to_parse, segmented_text_file,
+                      segmented_dictionary_file):
     '''
     This function parses the output of the segmented_word morphologies into
     a human-readable format that denotes a segmented_word split into its morphemes
@@ -221,11 +222,16 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
     the segmentation along with its respective word.
 
     :param file: a txt file that contains each words' morphology trees
-    :param nonterminals_to_parse: a RegEx that denotes the nontermials that will be parsed and returned in the final
+    :param min_stem_length: integer that represents the minimum length of a
+    Stem morph in characters
+    :param nonterminals_to_parse: a RegEx that denotes the nontermials that will
+    be parsed and returned in the final
     output
     :param segmented_text_file: file location to write all word segmentations
-    :param segmented_dictionary_file: file location to write all word segmentations and their respective word
-    :return map of words and their respective parsings by affix (example: "irreplaceables" : "ir+re+(place)+able+s")
+    :param segmented_dictionary_file: file location to write all word segmentations
+    and their respective word
+    :return map of words and their respective parsings by affix
+    (example: "irreplaceables" : "ir+re+(place)+able+s")
     '''
     word_segmentation_map = {}
     segmented_word_list = []
@@ -238,6 +244,8 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
         # Append affixes together separated by a "+".
         segmented_word = ""
         full_word = ""
+        contains_stem = "Stem" in nonterminals_to_parse
+        stem_morph = ""
         for morph in all_morphs:
             full_word += morph[1]
             # Append "+".
@@ -248,9 +256,13 @@ def extract_all_words(file, nonterminals_to_parse, segmented_text_file, segmente
             is_stem = re.match(r'^Stem#[0-9]+', morph_type)
             if is_stem:
                 segmented_word += "("
+                stem_morph = morph[1]
             segmented_word += morph[1]
             if is_stem:
                 segmented_word += ")"
+        # If Stem length is less than min_stem_length, then do not segment word at all.
+        if contains_stem and len(stem_morph) < min_stem_length:
+            segmented_word = "(" + full_word + ")" # between parentheses
         if word_segmentation_map.get(full_word) is None:
             word_segmentation_map[full_word] = segmented_word
         segmented_word_list.append((full_word, segmented_word))
@@ -660,7 +672,7 @@ def replace_words_with_segmentations(dic, txt_file, output_file, multiway_segmen
 
 def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
                   segmented_dictionary_file, to_parse_file, output_file,
-                  multiway_segmentation=False):
+                  min_stem_length=0, multiway_segmentation=False):
     '''
     Function that takes the output of a word grammar file, creates a segmented
     word dictionary from its output, and uses these to replace the words in a
@@ -676,6 +688,8 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     (All punctuation marks are separated from words by whitespace such as:
     "The dog ' s bowl is empty . ")
     :param output_file: file to write output to
+    :param min_stem_length: integer that represents the minimum length of a
+    Stem morph (in characters)
     :param multiway_segmentation: boolean value;
         if value is false, the segmented word will contain a three-way split
         (Prefix+Stem+Suffix)
@@ -683,7 +697,8 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
         if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
     :return:
     '''
-    map = extract_all_words(word_morph_tree_file, morph_pattern, segmented_text_file, segmented_dictionary_file)
+    map = extract_all_words(word_morph_tree_file, min_stem_length, morph_pattern, segmented_text_file,
+                            segmented_dictionary_file)
     replace_words_with_segmentations(map, to_parse_file, output_file, multiway_segmentation)
     return
 
