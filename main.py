@@ -92,6 +92,30 @@ def add_chars_to_grammar(grammar, hex_chars):
     grammar['1 1 Char'].extend(hex_chars)
     return grammar
 
+# If lang = 'jp', separate data into J_Char and Ch_Char
+def separate_jp_char(grammar_file, grammar_file_sep_char):
+    hiragana = "ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴ\
+    ふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖ"
+    katakana = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピ\
+    フブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ"
+    all_jp_char = hiragana + katakana
+    j_char = set([all_jp_char.split()])
+    file = open(grammar_file, "r", encoding="utf-16")
+    file_sep_char = open(grammar_file_sep_char, "w", encoding="utf-16")
+    for line in file.readlines():
+        # Only process lines beginning with "1 1 Char"
+        if "1 1 Char -->" in line:
+            elements = line.split()
+            if convert_hex_to_string(elements[4]) in j_char:
+                elements[2] = "J_Char"
+            else:
+                elements[2] == "Ch_Char"
+            new_line = " ".join(elements)
+            file_sep_char.write(new_line)
+        else:
+            file_sep_char.write(line)
+    file.close()
+    file_sep_char.close()
 
 def prepare_scholar_seeded_grammar(grammar, lk_file, prefix_nonterminal, suffix_nonterminal):
     '''
