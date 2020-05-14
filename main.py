@@ -21,7 +21,7 @@ def process_words(word_list_file):
     encoded_words = []
     hex_chars = []
     # Loop over the file and process word by word.
-    for line in open(word_list_file):
+    for line in open(word_list_file, encoding="utf-8"):
         line = line.strip()
         # Ignore comment lines.
         if not line or line.startswith('#') or line.startswith('//'):
@@ -79,7 +79,7 @@ def write_grammar(grammar, grammar_file):
     '''
     This function writes a grammar map into a file.
     '''
-    grammar_writer = open(grammar_file, 'w')
+    grammar_writer = open(grammar_file, 'w', encoding="utf-8")
     for key in grammar:
         for value in grammar[key]:
             grammar_writer.write(key + ' --> ' + value + '\n')
@@ -99,14 +99,17 @@ def separate_jp_char(grammar_file, grammar_file_sep_char):
     katakana = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピ\
     フブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ"
     all_jp_char = hiragana + katakana
-    j_char = set([all_jp_char.split()])
-    file = open(grammar_file, "r", encoding="utf-16")
-    file_sep_char = open(grammar_file_sep_char, "w", encoding="utf-16")
+    j_char = set(list(all_jp_char))
+    file = open(grammar_file, "r", encoding="utf-8")
+    file_sep_char = open(grammar_file_sep_char, "w", encoding="utf-8")
     for line in file.readlines():
         # Only process lines beginning with "1 1 Char"
+        elements = line.split()
+        if elements[4] == "J_Char" or elements[4] == "Ch_Char":
+            continue
+        ch = convert_hex_to_string(elements[4])
         if "1 1 Char -->" in line:
-            elements = line.split()
-            if convert_hex_to_string(elements[4]) in j_char:
+            if ch in j_char:
                 elements[2] = "J_Char"
             else:
                 elements[2] == "Ch_Char"
@@ -133,7 +136,7 @@ def prepare_scholar_seeded_grammar(grammar, lk_file, prefix_nonterminal, suffix_
 
 def read_linguistic_knowledge(lk_file):
     '''
-    This function reads the prefixes and suffixes in an lk_file (lk stands for Loinguistic Knowledge).
+    This function reads the prefixes and suffixes in an lk_file (lk stands for Liinguistic Knowledge).
     '''
     prefixes = []
     suffixes = []
@@ -176,7 +179,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         :return: a list of affixes and their respective morph type
     '''
 
-    if nonterminals_to_parse == "Char":
+    if nonterminals_to_parse == "Char" or nonterminals_to_parse == "J_Char" or nonterminals_to_parse == "Ch_Char":
         nonterminals_to_parse = "Chars"
 
     curr_morph = "" # Keeps track of current morph in word_nonterminals list when iterating.
@@ -197,6 +200,9 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
             if morph and (len(global_nonterminal) == 0 or r):
                 new_morph = (curr_morph, morph)
                 all_morphs.append(new_morph)
+                if len(global_nonterminal) > 0:
+                    global_nonterminal.pop()
+                inner_children = []
                 morph = ""
                 curr_morph = ""
             # Update current morph to search for if different from previous iteration.
@@ -219,7 +225,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
                             global_nonterminal.pop()
                             curr_morph = ""
                             break
-                        if last_popped_morph == "Char":
+                        if last_popped_morph == "Char" or last_popped_morph == "J_Char" or last_popped_morph == "Ch_Char":
                             # Parse to hex value and convert.
                             h = nonterminal.split()[1]
                             e = h.find(")")
