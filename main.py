@@ -175,7 +175,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
 
         :param word_nonterminals: List of all nonterminals in the grammar morph tree of a word.
         (ex: ["Word", "Prefix#1", ...])
-        :param nonterminals_to_parse: RegEx specifiying which nonterminals to parse by (ex: "Prefix|Stem|Suffix").
+        :param nonterminals_to_parse: string specifiying which nonterminals to parse by (ex: "Prefix|Stem|Suffix").
         :return: a list of affixes and their respective morph type
     '''
 
@@ -254,9 +254,8 @@ def extract_all_words(file, min_stem_length, nonterminals_to_parse, segmented_te
     :param file: a txt file that contains each words' morphology trees
     :param min_stem_length: integer that represents the minimum length of a
     Stem morph in characters
-    :param nonterminals_to_parse: a RegEx that denotes the nontermials that will
-    be parsed and returned in the final
-    output
+    :param nonterminals_to_parse: a string that denotes the nontermials and the order that will
+    be parsed and returned in the final output
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
     and their respective word
@@ -329,7 +328,7 @@ def analyze_affixes(file, n, prefix_marker, suffix_marker):
     :param n: number indicating how many of the top affixes to return.
     :param prefix_marker: name of the prefix nonterminal to search for
     :param suffix_marker: name of the suffix nonterminal to search for
-    :return: top n affixes, all prefixes and their counts, all suffixes and their counts
+    :return: top n affixes, all prefixes, and all suffixes
     '''
     prefix_counter = {}
     suffix_counter = {}
@@ -709,8 +708,8 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     text file with their segmented version. This function is a wrapper to the
     functions: extract_all_words and replace_words_with_segmentations
     :param word_morph_tree_file: a txt file that contains each words' morphology trees
-    :param morph_pattern: a RegEx that denotes the nontermials that will be parsed
-    and returned in the final output
+    :param morph_pattern: a string that denotes the nontermials that will be parsed
+    and returned in the final output e.g., "(Prefix|Stem|Suffix)"
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
     and their respective word
