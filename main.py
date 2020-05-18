@@ -92,34 +92,6 @@ def add_chars_to_grammar(grammar, hex_chars):
     grammar['1 1 Char'].extend(hex_chars)
     return grammar
 
-# If lang = 'jp', separate data into J_Char and Ch_Char
-def separate_jp_char(grammar_file, grammar_file_sep_char):
-    hiragana = "ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴ\
-    ふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖ"
-    katakana = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピ\
-    フブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ"
-    all_jp_char = hiragana + katakana
-    j_char = set(list(all_jp_char))
-    file = open(grammar_file, "r", encoding="utf-8")
-    file_sep_char = open(grammar_file_sep_char, "w", encoding="utf-8")
-    for line in file.readlines():
-        # Only process lines beginning with "1 1 Char"
-        elements = line.split()
-        if elements[4] == "J_Char" or elements[4] == "Ch_Char":
-            continue
-        ch = convert_hex_to_string(elements[4])
-        if "1 1 Char -->" in line:
-            if ch in j_char:
-                elements[2] = "J_Char"
-            else:
-                elements[2] == "Ch_Char"
-            new_line = " ".join(elements)
-            file_sep_char.write(new_line)
-        else:
-            file_sep_char.write(line)
-    file.close()
-    file_sep_char.close()
-
 def prepare_scholar_seeded_grammar(grammar, lk_file, prefix_nonterminal, suffix_nonterminal):
     '''
     This function seeds a grammar tree with prefixes and suffixes read from a file (lk_file where lk stands for Loinguistic Knowledge).
@@ -241,7 +213,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         all_morphs.append(new_morph)
     return all_morphs
 
-def extract_all_words(file, min_stem_length, nonterminals_to_parse, segmented_text_file,
+def parse_PYAGS_segmentation_output(file, min_stem_length, nonterminals_to_parse, segmented_text_file,
                       segmented_dictionary_file):
     '''
     This function parses the output of the segmented_word morphologies into
@@ -706,7 +678,7 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     Function that takes the output of a word grammar file, creates a segmented
     word dictionary from its output, and uses these to replace the words in a
     text file with their segmented version. This function is a wrapper to the
-    functions: extract_all_words and segment_file
+    functions: parse_PYAGS_segmentation_output and segment_file
     :param word_morph_tree_file: a txt file that contains each words' morphology trees
     :param morph_pattern: a string that denotes the nontermials that will be parsed
     and returned in the final output e.g., "(Prefix|Stem|Suffix)"
@@ -726,7 +698,7 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
         if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
     :return:
     '''
-    map = extract_all_words(word_morph_tree_file, min_stem_length, morph_pattern, segmented_text_file,
+    map = parse_PYAGS_segmentation_output(word_morph_tree_file, min_stem_length, morph_pattern, segmented_text_file,
                             segmented_dictionary_file)
     segment_file(map, to_parse_file, output_file, multiway_segmentation)
     return
