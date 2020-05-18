@@ -701,7 +701,7 @@ def replace_words_with_segmentations(dic, txt_file, output_file, multiway_segmen
 
 def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
                   segmented_dictionary_file, to_parse_file, output_file,
-                  min_stem_length=0, multiway_segmentation=False):
+                  min_stem_length=2, multiway_segmentation=False):
     '''
     Function that takes the output of a word grammar file, creates a segmented
     word dictionary from its output, and uses these to replace the words in a
