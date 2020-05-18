@@ -623,7 +623,7 @@ def split_morphs_into_submorphs(segmented_word, affix_maps):
                 new_morph.append(all_splits_sorted[0][0])
     return "+".join(new_morph)
 
-def replace_words_with_segmentations(dic, txt_file, output_file, multiway_segmentaion):
+def segment_file(dic, txt_file, output_file, multiway_segmentaion):
     '''
     This function morphologically segments all words in a given plaintext file.
     :param dic: dictionary containing a list of words in the given language.
@@ -706,7 +706,7 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     Function that takes the output of a word grammar file, creates a segmented
     word dictionary from its output, and uses these to replace the words in a
     text file with their segmented version. This function is a wrapper to the
-    functions: extract_all_words and replace_words_with_segmentations
+    functions: extract_all_words and segment_file
     :param word_morph_tree_file: a txt file that contains each words' morphology trees
     :param morph_pattern: a string that denotes the nontermials that will be parsed
     and returned in the final output e.g., "(Prefix|Stem|Suffix)"
@@ -728,7 +728,7 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     '''
     map = extract_all_words(word_morph_tree_file, min_stem_length, morph_pattern, segmented_text_file,
                             segmented_dictionary_file)
-    replace_words_with_segmentations(map, to_parse_file, output_file, multiway_segmentation)
+    segment_file(map, to_parse_file, output_file, multiway_segmentation)
     return
 
 
