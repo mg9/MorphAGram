@@ -92,8 +92,15 @@ def add_chars_to_grammar(grammar, hex_chars):
     grammar['1 1 Char'].extend(hex_chars)
     return grammar
 
-# If lang = 'jp', separate data into J_Char and Ch_Char
+
 def separate_jp_char(grammar_file, grammar_file_sep_char):
+    '''
+    This function takes a Japanese grammar file (already populated by characters as "Char")
+    and separates the characters into Japanese and Chinese characters as J_Char and Ch_Char, respectively
+    :param grammar_file: original grammar file path
+    :param grammar_file_sep_char: grammar file path to character-separated grammars
+    :return:
+    '''
     hiragana = "ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴ\
     ふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖ"
     katakana = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピ\
@@ -105,20 +112,34 @@ def separate_jp_char(grammar_file, grammar_file_sep_char):
     for line in file.readlines():
         # Only process lines beginning with "1 1 Char"
         elements = line.split()
-        if elements[4] == "J_Char" or elements[4] == "Ch_Char":
-            continue
-        ch = convert_hex_to_string(elements[4])
         if "1 1 Char -->" in line:
+            ch = convert_hex_to_string(elements[4])
             if ch in j_char:
                 elements[2] = "J_Char"
             else:
-                elements[2] == "Ch_Char"
+                elements[2] = "Ch_Char"
             new_line = " ".join(elements)
+            new_line += "\n"
             file_sep_char.write(new_line)
         else:
             file_sep_char.write(line)
     file.close()
     file_sep_char.close()
+
+def prepare_cascaded_grammar(grammar, output_file, n, expression, prefix_nonterminal, suffix_nonterminal):
+    '''
+    This function seeds a grammar tree with prefixes and suffixes read from the output of some grammar.
+    The nonterminals under which the affixes are inserted are denoted by prefix_nonterminal and suffix_nonterminal for prefixes and suffixes, respectively.
+    '''
+    markers = expression.split("|")
+    prefix_marker = markers[0][1:]
+    suffix_marker = markers[1][:-1]
+    _, prefixes, suffixes = analyze_affixes(output_file, n, prefix_marker, suffix_marker)
+    # Seed the grammar with the prefixes.
+    grammar['1 1 ' + prefix_nonterminal].extend([convert_string_to_hex_chars(prefix) for prefix in prefixes])
+    # Seed the grammar with the suffixes.
+    grammar['1 1 ' + suffix_nonterminal].extend([convert_string_to_hex_chars(suffix) for suffix in suffixes])
+    return grammar
 
 def prepare_scholar_seeded_grammar(grammar, lk_file, prefix_nonterminal, suffix_nonterminal):
     '''
