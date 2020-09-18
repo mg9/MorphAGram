@@ -20,7 +20,7 @@ train.txt: Unsegmented training data (based on Wikipedia)
 traindev.txt: Unsegmented training+gold data
 lk.txt: Scholar-seeded knowledge
 
-PyCFG
+PyCFG:
 The inputs and outputs to the PYCFG sampler.
 The outputs include the grammar, segmentation output and trace logs.
 
