@@ -1,0 +1,32 @@
+1 1 Word --> ^^^ Morphs $$$
+1 1 Morphs --> Morph Morphs
+1 1 Morphs --> Morph
+Morph --> SubMorphs
+1 1 SubMorphs --> SubMorph SubMorphs
+1 1 SubMorphs --> SubMorph
+SubMorph --> Chars
+1 1 Chars --> Char
+1 1 Chars --> Char Chars
+1 1 Morph --> e18390 e18390 e1839b e1839d
+1 1 Morph --> e18390 e183a0 e18390
+1 1 Morph --> e18397 e18390 e1839c
+1 1 Morph --> e18399 e18395 e18390 e18396 e18398
+1 1 Morph --> e183a1 e18390
+1 1 Morph --> e183a4 e183a1 e18394 e18395 e18393 e1839d
+1 1 Morph --> e183a5 e18395 e18394
+1 1 Morph --> e183ac e18390 e183a0
+1 1 Morph --> e183ac e18390 e183a0 e1839b e1839d
+1 1 Morph --> e18390 e18390 e18393
+1 1 Morph --> e18394 e18391
+1 1 Morph --> e18394 e18391 e18390
+1 1 Morph --> e18398
+1 1 Morph --> e18398 e18390 e1839c
+1 1 Morph --> e18398 e18390 e1839c e18398
+1 1 Morph --> e18398 e183a1
+1 1 Morph --> e1839a e1839d e18392 e18398 e18390
+1 1 Morph --> e1839b e18393 e18398 e183a1
+1 1 Morph --> e1839d
+1 1 Morph --> e1839d e18391 e18390
+1 1 Morph --> e1839d e18393 e18394
+1 1 Morph --> e183a4 e18394 e183a0 e18398
+1 1 Morph --> e183a8 e18395 e18398 e1839a e18398
