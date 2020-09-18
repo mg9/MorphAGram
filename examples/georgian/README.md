@@ -1,8 +1,8 @@
-This directory includes the adaptor-grammar data for Georgian according to Eskander 2020. The directories are as follows:
+This directory includes the adaptor-grammar data for Georgian according to Eskander et al., 2020. The directories are as follows:
 
 Grammar:
 - A list of 22 grammars in the standard, scholar seeded and cascaded settings.
-- The mapping from the grammar references in Eskander 2016 and Eskander 2020 is as follows:
+- The mapping from the grammar references in Eskander et al., 2016 and Eskander et al., 2020 is as follows:
 PrStSu: Grammar0
 PrStSu+SM: Grammar1
 PrStSu+Co+SM: Grammar2
