@@ -23,4 +23,3 @@ lk.txt: Scholar-seeded knowledge
 PyCFG:
 The inputs and outputs to the PYCFG sampler.
 The outputs include the grammar, segmentation output and trace logs.
-
