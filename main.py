@@ -21,18 +21,19 @@ def process_words(word_list_file):
     encoded_words = []
     hex_chars = []
     # Loop over the file and process word by word.
-    for line in open(word_list_file, encoding="utf-8"):
-        line = line.strip()
-        # Ignore comment lines.
-        if not line or line.startswith('#') or line.startswith('//'):
-            continue
-        word = line
-        words.append(word)
-        # Covert the word to its HEX representation.
-        encoded_word = convert_string_to_hex_chars(word)
-        encoded_words.append(encoded_word)
-        # Keep track of the unique characters (in the HEX representation).
-        hex_chars.extend(encoded_word.split())
+    with open(word_list_file, 'r', encoding="utf-8") as fin:
+        for line in fin:
+            line = line.strip()
+            # Ignore comment lines.
+            if not line or line.startswith('#') or line.startswith('//'):
+                continue
+            word = line
+            words.append(word)
+            # Covert the word to its HEX representation.
+            encoded_word = convert_string_to_hex_chars(word)
+            encoded_words.append(encoded_word)
+            # Keep track of the unique characters (in the HEX representation).
+            hex_chars.extend(encoded_word.split())
     # Sort the outputs.
     words.sort()
     encoded_words.sort()
@@ -44,8 +45,8 @@ def write_encoded_words(encoded_words, word_list_file):
     '''
     This function writes a list of encoded words (in the HEX representation) into a file.
     '''
-    word_list_writer = open(word_list_file, 'w')
-    word_list_writer.writelines('^^^ %s $$$\n' % word for word in encoded_words)
+    with open(word_list_file, 'w') as fout:
+        fout.writelines('^^^ %s $$$\n' % word for word in encoded_words)
 
 
 def read_grammar(grammar_file):
@@ -56,22 +57,23 @@ def read_grammar(grammar_file):
     '''
     grammar = defaultdict(list)
     # Loop over the file and process rule by rule.
-    for line in open(grammar_file):
-        line = line.strip()
-        # Ignore comment lines.
-        if not line or line.startswith('#') or line.startswith('//'):
-            continue
-        # Read the current rule.
-        columns = line.partition('-->')
-        key = columns[0].strip()
-        value = columns[2].strip()
-        # Convert terminal chcratcers within "(" and ")" into their HEX representation.
-        match = re.search(r'(\(.*?\))', value)
-        while match:
-            value = convert_string_to_hex_chars(match.group(0)[1:-1])
-            value = line.replace(match.group(0), replacement)
+    with open(grammar_file, 'r', encoding="utf-8") as fin:
+        for line in fin:
+            line = line.strip()
+            # Ignore comment lines.
+            if not line or line.startswith('#') or line.startswith('//'):
+                continue
+            # Read the current rule.
+            columns = line.partition('-->')
+            key = columns[0].strip()
+            value = columns[2].strip()
+            # Convert terminal chcratcers within "(" and ")" into their HEX representation.
             match = re.search(r'(\(.*?\))', value)
-        grammar[key].append(value)
+            while match:
+                value = convert_string_to_hex_chars(match.group(0)[1:-1])
+                value = line.replace(match.group(0), replacement)
+                match = re.search(r'(\(.*?\))', value)
+            grammar[key].append(value)
     return grammar
 
 
@@ -79,10 +81,10 @@ def write_grammar(grammar, grammar_file):
     '''
     This function writes a grammar map into a file.
     '''
-    grammar_writer = open(grammar_file, 'w', encoding="utf-8")
-    for key in grammar:
-        for value in grammar[key]:
-            grammar_writer.write(key + ' --> ' + value + '\n')
+    with open(grammar_file, 'w', encoding="utf-8") as fout:
+        for key in grammar:
+            for value in grammar[key]:
+                fout.write(key + ' --> ' + value + '\n')
 
 
 def add_chars_to_grammar(grammar, hex_chars):
@@ -107,33 +109,35 @@ def separate_jp_char(grammar_file, grammar_file_sep_char):
     フブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺ"
     all_jp_char = hiragana + katakana
     j_char = set(list(all_jp_char))
-    file = open(grammar_file, "r", encoding="utf-8")
-    file_sep_char = open(grammar_file_sep_char, "w", encoding="utf-8")
-    for line in file.readlines():
-        # Only process lines beginning with "1 1 Char"
-        elements = line.split()
-        if "1 1 Char -->" in line:
-            ch = convert_hex_to_string(elements[4])
-            if ch in j_char:
-                elements[2] = "J_Char"
-            else:
-                elements[2] = "Ch_Char"
-            new_line = " ".join(elements)
-            new_line += "\n"
-            file_sep_char.write(new_line)
-        else:
-            file_sep_char.write(line)
-    file.close()
-    file_sep_char.close()
+    with open(grammar_file, "r", encoding="utf-8") as fin:
+        with open(grammar_file_sep_char, "w", encoding="utf-8") as fin_sep:
+            for line in fin:
+                # Only process lines beginning with "1 1 Char"
+                elements = line.split()
+                if "1 1 Char -->" in line:
+                    ch = convert_hex_to_string(elements[4])
+                    if ch in j_char:
+                        elements[2] = "J_Char"
+                    else:
+                        elements[2] = "Ch_Char"
+                    new_line = " ".join(elements)
+                    new_line += "\n"
+                    fin_sep.write(new_line)
+                else:
+                    fin_sep.write(line)
 
-def prepare_cascaded_grammar(grammar, output_file, n, expression, prefix_nonterminal, suffix_nonterminal):
+def prepare_cascaded_grammar(grammar, output_file, n, nonterminals_to_parse, prefix_nonterminal, suffix_nonterminal):
     '''
     This function seeds a grammar tree with prefixes and suffixes read from the output of some grammar.
     The nonterminals under which the affixes are inserted are denoted by prefix_nonterminal and suffix_nonterminal for prefixes and suffixes, respectively.
+    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials that will be parsed (starting with the prefix and ending with the suffix)
+    :param n: the number of most frequent affixes to extract and seed
+    :param prefix_nonterminal: the prefix nonterminal to seed the prefixes into
+    :param suffix_nonterminal: the suffix nonterminal to seed the suffixes into
     '''
-    markers = expression.split("|")
-    prefix_marker = markers[0][1:]
-    suffix_marker = markers[1][:-1]
+    markers = nonterminals_to_parse.split("|")
+    prefix_marker = markers[0]
+    suffix_marker = markers[-1]
     _, prefixes, suffixes = analyze_affixes(output_file, n, prefix_marker, suffix_marker)
     # Seed the grammar with the prefixes.
     grammar['1 1 ' + prefix_nonterminal].extend([convert_string_to_hex_chars(prefix) for prefix in prefixes])
@@ -164,28 +168,91 @@ def read_linguistic_knowledge(lk_file):
     read_prefixes = False
     read_suffixes = False
     # Loop over the lines in the file.
-    for line in open(lk_file):
-        line = line.strip()
-        if line == '':
-            continue
-        # Read prefixes.
-        if line == '###PREFIXES###':
-            read_prefixes = True
-            read_suffixes = False
-        # Read suffixes.
-        elif line == '###SUFFIXES###':
-            read_prefixes = False
-            read_suffixes = True
-        elif line.startswith('###'):
-            break
-        else:
-            # Read a merker line.
-            if read_prefixes:
-                prefixes.append(line)
-            elif read_suffixes:
-                suffixes.append(line)
-    return prefixes, suffixes
+    with open(lk_file, 'r', encoding="utf-8") as fin:
+        for line in fin:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            # Read prefixes.
+            if line == '###PREFIXES###':
+                read_prefixes = True
+                read_suffixes = False
+            # Read suffixes.
+            elif line == '###SUFFIXES###':
+                read_prefixes = False
+                read_suffixes = True
+            elif line.startswith('###'):
+                break
+            else:
+                # Read a merker line.
+                if read_prefixes:
+                    prefixes.append(line)
+                elif read_suffixes:
+                    suffixes.append(line)
+        return prefixes, suffixes
 
+
+def analyze_affixes(file, n, prefix_marker, suffix_marker):
+    '''
+    :param file: file containing grammar morph tree for each word.
+    :param n: number indicating how many of the top affixes to return.
+    :param prefix_marker: name of the prefix nonterminal to search for
+    :param suffix_marker: name of the suffix nonterminal to search for
+    :return: top n affixes, all prefixes, and all suffixes
+    '''
+    prefix_counter = {}
+    suffix_counter = {}
+    with open(file, 'r', encoding='utf-8') as fin:
+        for line in fin:
+            line = line.strip()
+            fields = line.split('(')
+            # Search for a nonterminal match with a morph RegEx given as input.
+            nonterminals_to_parse = prefix_marker + "|" + suffix_marker
+            all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
+            # Separate into respective affix counter.
+            for morph in all_morphs:
+                morph_type = morph[0]
+                is_prefix = re.match(prefix_marker, morph_type)
+                if is_prefix:
+                    if prefix_counter.get(morph[1]):
+                        prefix_counter[morph[1]] += 1
+                    else:
+                        prefix_counter[morph[1]] = 1
+                else:
+                    if suffix_counter.get(morph[1]):
+                        suffix_counter[morph[1]] += 1
+                    else:
+                        suffix_counter[morph[1]] = 1
+
+    # Return top n affixes.
+    # Sort prefixes.
+    prefix_list_sorted = sorted(prefix_counter.items(), key=lambda x: x[1], reverse=True)
+    suffix_list_sorted = sorted(suffix_counter.items(), key=lambda x: x[1], reverse=True)
+
+    n_affixes = []
+    p = 0  # index for prefix_list_sorted
+    s = 0  # index for suffix_list_sorted
+
+    # Final list of x prefixes and y suffixes such that x+y=n
+    prefix_x = []
+    suffix_y = []
+
+    # If prefix and suffix lists were empty, return empty lists
+    if len(prefix_list_sorted) == len(suffix_list_sorted) == 0:
+        return n_affixes, prefix_x, suffix_y
+
+    while n > 0:
+        if len(prefix_list_sorted) > 0 and (len(suffix_list_sorted) == 0 or prefix_list_sorted[p][1] > suffix_list_sorted[s][1]):
+            n_affixes.append(prefix_list_sorted[p][0])
+            prefix_x.append(prefix_list_sorted[p][0])
+            p += 1
+        else:
+            n_affixes.append(suffix_list_sorted[s][0])
+            suffix_y.append(suffix_list_sorted[s][0])
+            s += 1
+        n -= 1
+
+    return n_affixes, prefix_x, suffix_y
 
 def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
     '''
@@ -262,8 +329,7 @@ def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
         all_morphs.append(new_morph)
     return all_morphs
 
-def parse_PYAGS_segmentation_output(file, min_stem_length, nonterminals_to_parse, segmented_text_file,
-                      segmented_dictionary_file):
+def parse_PYAGS_segmentation_output(file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file):
     '''
     This function parses the output of the segmented_word morphologies into
     a human-readable format that denotes a segmented_word split into its morphemes
@@ -273,9 +339,8 @@ def parse_PYAGS_segmentation_output(file, min_stem_length, nonterminals_to_parse
     the segmentation along with its respective word.
 
     :param file: a txt file that contains each words' morphology trees
-    :param min_stem_length: integer that represents the minimum length of a
     Stem morph in characters
-    :param nonterminals_to_parse: a string that denotes the nontermials and the order that will
+    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials and the order that will
     be parsed and returned in the final output
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
@@ -285,45 +350,52 @@ def parse_PYAGS_segmentation_output(file, min_stem_length, nonterminals_to_parse
     '''
     word_segmentation_map = {}
     segmented_word_list = []
-    to_parse = nonterminals_to_parse[1:len(nonterminals_to_parse) - 1]  # Remove parentheses.
 
-    for line in open(file, 'r', encoding='utf-8'):
-        fields = line.split('(')
-        # Search for a field match with a morph RegEx given as input.
-        all_morphs = convert_morph_tree_to_word(fields[1:], to_parse)
-        # Append affixes together separated by a "+".
-        segmented_word = ""
-        full_word = ""
-        contains_stem = "Stem" in nonterminals_to_parse
-        stem_morph = ""
-        for morph in all_morphs:
-            full_word += morph[1]
-            # Append "+".
-            if segmented_word != "":
-                segmented_word += "+"
-            # Enclose "Stem#[0-9]+" type morphs in "( ... )"
-            morph_type = morph[0]
-            is_stem = re.match(r'^Stem#[0-9]+', morph_type)
-            if is_stem:
-                segmented_word += "("
-                stem_morph = morph[1]
-            segmented_word += morph[1]
-            if is_stem:
-                segmented_word += ")"
-        # If Stem length is less than min_stem_length, then do not segment word at all.
-        if contains_stem and len(stem_morph) < min_stem_length:
-            segmented_word = "(" + full_word + ")" # between parentheses
-        if word_segmentation_map.get(full_word) is None:
-            word_segmentation_map[full_word] = segmented_word
-        segmented_word_list.append((full_word, segmented_word))
+    with open(file, 'r', encoding='utf-8') as fin:
+        for line in fin:
+            line = line.strip()
+            if len(line) == 0:
+                continue;
+            fields = line.split('(')
+            # Search for a field match with a morph RegEx given as input.
+            all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
+            # Append affixes together separated by a "+".
+            segmented_word = ""
+            full_word = ""
+            contains_stem = "Stem" in nonterminals_to_parse
+            stem_morph = ""
+            for morph in all_morphs:
+                full_word += morph[1]
+                # Append "+".
+                if segmented_word != "":
+                    segmented_word += "+"
+                # Enclose "Stem#[0-9]+" type morphs in "( ... )"
+                morph_type = morph[0]
+                is_stem = re.match(r'^Stem#[0-9]+', morph_type)
+                if is_stem:
+                    segmented_word += "("
+                    stem_morph = morph[1]
+                segmented_word += morph[1]
+                if is_stem:
+                    segmented_word += ")"
+            '''
+            # If Stem length is less than min_stem_length, then do not segment word at all.
+            if contains_stem and len(stem_morph) < min_stem_length:
+                segmented_word = "(" + full_word + ")" # between parentheses
+            '''
+            if word_segmentation_map.get(full_word) is None:
+                word_segmentation_map[full_word] = segmented_word
+            segmented_word_list.append((full_word, segmented_word))
 
     # Write all segmented words to segmented_text_file.
-    include_word = False
-    write_word_segmentations_to_file(segmented_text_file, include_word, segmented_word_list)
+    if segmented_text_file:
+        include_word = False
+        write_word_segmentations_to_file(segmented_text_file, include_word, segmented_word_list)
 
     # Write words and their respective segmentation to segmented_text_and_word_file.
-    include_word = True
-    write_word_segmentations_to_file(segmented_dictionary_file, include_word, word_segmentation_map.items())
+    if segmented_dictionary_file:
+        include_word = True
+        write_word_segmentations_to_file(segmented_dictionary_file, include_word, word_segmentation_map.items())
 
     return word_segmentation_map
 
@@ -334,76 +406,13 @@ def write_word_segmentations_to_file(file, include_word, word_list):
     :param include_word: Boolean whether to write non-segmented word to file
     :param word_list: list of words to write
     '''
-    f = open(file, "w", encoding='utf-8')
-    for w in word_list:
-        new_line = ""
-        if include_word:
-            new_line += w[0] + "\t"
-        new_line += w[1] + '\n'
-        f.write(new_line)
-    f.close()
-
-def analyze_affixes(file, n, prefix_marker, suffix_marker):
-    '''
-    :param file: file containing grammar morph tree for each word.
-    :param n: number indicating how many of the top affixes to return.
-    :param prefix_marker: name of the prefix nonterminal to search for
-    :param suffix_marker: name of the suffix nonterminal to search for
-    :return: top n affixes, all prefixes, and all suffixes
-    '''
-    prefix_counter = {}
-    suffix_counter = {}
-
-    for line in open(file, 'r'):
-        fields = line.split('(')
-        # Search for a nonterminal match with a morph RegEx given as input.
-        nonterminals_to_parse = prefix_marker + "|" + suffix_marker
-        all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
-        # Separate into respective affix counter.
-        for morph in all_morphs:
-            morph_type = morph[0]
-            is_prefix = re.match(prefix_marker, morph_type)
-            if is_prefix:
-                if prefix_counter.get(morph[1]):
-                    prefix_counter[morph[1]] += 1
-                else:
-                    prefix_counter[morph[1]] = 1
-            else:
-                if suffix_counter.get(morph[1]):
-                    suffix_counter[morph[1]] += 1
-                else:
-                    suffix_counter[morph[1]] = 1
-
-    # Return highest n affixes.
-    # Sort prefixes.
-    prefix_list_sorted = sorted(prefix_counter.items(), key=lambda x: x[1], reverse=True)
-    suffix_list_sorted = sorted(suffix_counter.items(), key=lambda x: x[1], reverse=True)
-
-    n_affixes = []
-    p = 0  # index for prefix_list_sorted
-    s = 0  # index for suffix_list_sorted
-
-    # Final list of x prefixes and y suffixes such that x+y=n
-    prefix_x = []
-    suffix_y = []
-
-    # If prefix and suffix lists were empty, return empty lists
-    if len(prefix_list_sorted) == len(suffix_list_sorted) == 0:
-        return n_affixes, prefix_x, suffix_y
-
-    while n > 0:
-        if len(prefix_list_sorted) > 0 and (len(suffix_list_sorted) == 0 or
-                                            prefix_list_sorted[p][1] > suffix_list_sorted[s][1]):
-            n_affixes.append(prefix_list_sorted[p][0])
-            prefix_x.append(prefix_list_sorted[p][0])
-            p += 1
-        else:
-            n_affixes.append(suffix_list_sorted[s][0])
-            suffix_y.append(suffix_list_sorted[s][0])
-            s += 1
-        n -= 1
-
-    return n_affixes, prefix_x, suffix_y
+    with open(file, "w", encoding='utf-8') as fout:
+        for w in word_list:
+            new_line = ""
+            if include_word:
+                new_line += w[0] + "\t"
+            new_line += w[1] + '\n'
+            fout.write(new_line)
 
 def insert_splits(word, count, solutions):
     '''
@@ -644,7 +653,7 @@ def split_morphs_into_submorphs(segmented_word, affix_maps):
                 new_morph.append(all_splits_sorted[0][0])
     return "+".join(new_morph)
 
-def segment_file(dic, txt_file, output_file, multiway_segmentaion):
+def segment_file(dic, txt_file, output_file, min_word_length_to_segment, multiway_segmentaion):
     '''
     This function morphologically segments all words in a given plaintext file.
     :param dic: dictionary containing a list of words in the given language.
@@ -653,6 +662,10 @@ def segment_file(dic, txt_file, output_file, multiway_segmentaion):
     (All punctuation marks are separated from words by whitespace such as:
     "The dog ' s bowl is empty . ")
     :param output_file: file to write output to
+    :param min_stem_length: integer that represents the minimum length of a
+    stem in the segmentation output of unseen words
+    :param min_word_length_to_segment: integer that represents the minimum length of a
+    word to be segmented (in characters)
     :param multiway_segmentaion: boolean value;
         if value is false, the segmented word will contain a three-way split
         (Prefix+Stem+Suffix)
@@ -661,76 +674,78 @@ def segment_file(dic, txt_file, output_file, multiway_segmentaion):
     :return:
     '''
     SEGMENT_COUNT = 2
-    f_output = open(output_file, "w", encoding='utf-8')
+    with open(output_file, "w", encoding='utf-8') as fout:
 
-    # Pre-process dictionary to count all affixes (Prefix, Stem, and Suffix).
-    prefix_map, stem_map, suffix_map = count_affixes_from_dictionary(dic)
-    prefix_total, prefix_counts = count_total_affixes(prefix_map)
-    suffix_total, suffix_counts = count_total_affixes(suffix_map)
-    stem_total = sum(stem_map.values())
-    affix_maps = [prefix_map, stem_map, suffix_map]
-    affix_counts = [prefix_counts, stem_map, suffix_counts]
-    affix_totals = [prefix_total, stem_total, suffix_total]
+        # Pre-process dictionary to count all affixes (Prefix, Stem, and Suffix).
+        prefix_map, stem_map, suffix_map = count_affixes_from_dictionary(dic)
+        prefix_total, prefix_counts = count_total_affixes(prefix_map)
+        suffix_total, suffix_counts = count_total_affixes(suffix_map)
+        stem_total = sum(stem_map.values())
+        affix_maps = [prefix_map, stem_map, suffix_map]
+        affix_counts = [prefix_counts, stem_map, suffix_counts]
+        affix_totals = [prefix_total, stem_total, suffix_total]
 
-    for line in open(txt_file, "r", encoding='utf-8'):
-        words = line.split()
-        new_line = [] # List containing all the segmented replacements of word in original line.
-        for word in words:
-            # Save casing of all characters in a word.
-            casing = [ch.islower() for ch in word]
-            word_low = word.lower()
-            # If word already exists in dictionary, replace with existing segmentation.
-            if word_low in dic:
-                segmented_word = dic[word_low]
-                segmented_word = restore_casing(segmented_word, casing)
-                new_line.append(segmented_word)
-                continue
-            elif len(word_low) == 1 and word_low in string.punctuation:
-                punctuation = "("
-                punctuation += word_low + ")"
-                new_line.append(punctuation)
-                continue
+        with open(txt_file, "r", encoding='utf-8') as fin:
+            for line in fin:
+                words = line.split()
+                new_line = [] # List containing all the segmented replacements of word in original line.
+                for word in words:
+                    #If the word is too short, do not segment it.
+                    if len(word) < min_word_length_to_segment:
+                        segmented_word = "("+word+")"
+                    else:
+                        # Save casing of all characters in a word.
+                        casing = [ch.islower() for ch in word]
+                        word_low = word.lower()
+                        # If word already exists in dictionary, replace with existing segmentation.
+                        if word_low in dic:
+                            segmented_word = dic[word_low]
+                            segmented_word = restore_casing(segmented_word, casing)
+                            new_line.append(segmented_word)
+                            continue
+                        elif len(word_low) == 1 and word_low in string.punctuation:
+                            punctuation = "("
+                            punctuation += word_low + ")"
+                            new_line.append(punctuation)
+                            continue
 
-            # Deduce segmentation from existing affixes.
-            all_possible_splits = insert_splits(word_low, SEGMENT_COUNT, [])
-            candidate_score_tracker = {}
-            for candidate in all_possible_splits:
-                score = calculate_MLE(candidate, affix_counts, affix_totals)
-                candidate_score_tracker[candidate] = score
-            candidate_list_sorted = sorted(candidate_score_tracker.items(), key=lambda x: x[1], reverse=True)
+                        # Deduce segmentation from existing affixes.
+                        all_possible_splits = insert_splits(word_low, SEGMENT_COUNT, [])
+                        candidate_score_tracker = {}
+                        for candidate in all_possible_splits:
+                            score = calculate_MLE(candidate, affix_counts, affix_totals)
+                            candidate_score_tracker[candidate] = score
+                        candidate_list_sorted = sorted(candidate_score_tracker.items(), key=lambda x: x[1], reverse=True)
 
-            # Choose highest-scoring candidate and return to original casing.
-            if len(candidate_list_sorted) == 0 or candidate_list_sorted[0][1] == 0.0:
-                segmented_word = "(" + word_low + ")"
-            else:
-                segmented_word = candidate_list_sorted[0][0]
-            segmented_word = insert_parentheses(segmented_word)
-            segmented_word = restore_casing(segmented_word, casing)
+                        # Choose highest-scoring candidate and return to original casing.
+                        if len(candidate_list_sorted) == 0 or candidate_list_sorted[0][1] == 0.0:
+                            segmented_word = "(" + word_low + ")"
+                        else:
+                            segmented_word = candidate_list_sorted[0][0]
+                        segmented_word = insert_parentheses(segmented_word)
+                        segmented_word = restore_casing(segmented_word, casing)
 
-            # If multiway_segmentation is True, further split prefixes and affixes into sub-affixes if applicable.
-            # For example: irre+(place)+ables --> ir+re+(place)+able+s
-            if multiway_segmentaion:
-                segmented_word = split_morphs_into_submorphs(segmented_word, affix_maps)
-
-            new_line.append(segmented_word)
-        full_line = " ".join(new_line)
-        full_line += '\n'
-        f_output.write(full_line)
-
-    f_output.close()
+                        # If multiway_segmentation is True, further split prefixes and affixes into sub-affixes if applicable.
+                        # For example: irre+(place)+ables --> ir+re+(place)+able+s
+                        if multiway_segmentaion:
+                            segmented_word = split_morphs_into_submorphs(segmented_word, affix_maps)
+                    new_line.append(segmented_word)
+                full_line = " ".join(new_line)
+                full_line += '\n'
+                fout.write(full_line)
     return
 
-def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
+def parse_segment(word_morph_tree_file, nonterminals_to_parse, segmented_text_file,
                   segmented_dictionary_file, to_parse_file, output_file,
-                  min_stem_length=2, multiway_segmentation=False):
+                  min_word_length_to_segment=2, multiway_segmentation=False):
     '''
     Function that takes the output of a word grammar file, creates a segmented
     word dictionary from its output, and uses these to replace the words in a
     text file with their segmented version. This function is a wrapper to the
     functions: parse_PYAGS_segmentation_output and segment_file
     :param word_morph_tree_file: a txt file that contains each words' morphology trees
-    :param morph_pattern: a string that denotes the nontermials that will be parsed
-    and returned in the final output e.g., "(Prefix|Stem|Suffix)"
+    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials that will be parsed
+    and returned in the final output e.g., "Prefix|Stem|Suffix"
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
     and their respective word
@@ -738,8 +753,9 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
     (All punctuation marks are separated from words by whitespace such as:
     "The dog ' s bowl is empty . ")
     :param output_file: file to write output to
-    :param min_stem_length: integer that represents the minimum length of a
-    Stem morph (in characters)
+    stem in the segmentation output of unseen words (inductive)
+    :param min_word_length_to_segment: integer that represents the minimum length of a
+    word to be segmented (in characters)
     :param multiway_segmentation: boolean value;
         if value is false, the segmented word will contain a three-way split
         (Prefix+Stem+Suffix)
@@ -747,9 +763,8 @@ def segment_words(word_morph_tree_file, morph_pattern, segmented_text_file,
         if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
     :return:
     '''
-    map = parse_PYAGS_segmentation_output(word_morph_tree_file, min_stem_length, morph_pattern, segmented_text_file,
-                            segmented_dictionary_file)
-    segment_file(map, to_parse_file, output_file, multiway_segmentation)
+    map = parse_PYAGS_segmentation_output(word_morph_tree_file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file)
+    segment_file(map, to_parse_file, output_file, min_word_length_to_segment, multiway_segmentation)
     return
 
 
