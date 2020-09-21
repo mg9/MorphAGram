@@ -3,7 +3,6 @@ import sys
 import argparse
 import re
 import os
-
 from os import path
 from collections import defaultdict
 
