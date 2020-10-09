@@ -3,6 +3,7 @@ import sys
 import argparse
 import re
 import os
+
 from os import path
 from collections import defaultdict
 
@@ -36,9 +37,13 @@ def process_words(word_list_file):
     # Sort the outputs.
     words.sort()
     encoded_words.sort()
-    hex_chars.sort()
-    return set(words), set(encoded_words), set(hex_chars)
+    hex_chars = sort_unique(hex_chars)
+    return set(words), set(encoded_words), hex_chars
 
+def sort_unique(sequence):
+    sequence.sort()
+    seen = set()
+    return [x for x in sequence if not (x in seen or seen.add(x))]
 
 def write_encoded_words(encoded_words, word_list_file):
     '''
@@ -125,23 +130,21 @@ def separate_jp_char(grammar_file, grammar_file_sep_char):
                 else:
                     fin_sep.write(line)
 
-def prepare_cascaded_grammar(grammar, output_file, n, nonterminals_to_parse, prefix_nonterminal, suffix_nonterminal):
+def prepare_cascaded_grammar(grammar, output_file, n, in_prefix_nonterminal, in_suffix_nonterminal, out_prefix_nonterminal, out_suffix_nonterminal):
     '''
     This function seeds a grammar tree with prefixes and suffixes read from the output of some grammar.
     The nonterminals under which the affixes are inserted are denoted by prefix_nonterminal and suffix_nonterminal for prefixes and suffixes, respectively.
-    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials that will be parsed (starting with the prefix and ending with the suffix)
+    :param in_prefix_nonterminal: the prefix nonterminal to read from the output
+    :param in_suffix_nonterminal: the suffix nonterminal to read from the output
     :param n: the number of most frequent affixes to extract and seed
-    :param prefix_nonterminal: the prefix nonterminal to seed the prefixes into
-    :param suffix_nonterminal: the suffix nonterminal to seed the suffixes into
+    :param out_prefix_nonterminal: the prefix nonterminal to seed the prefixes into
+    :param out_suffix_nonterminal: the suffix nonterminal to seed the suffixes into
     '''
-    markers = nonterminals_to_parse.split("|")
-    prefix_marker = markers[0]
-    suffix_marker = markers[-1]
-    _, prefixes, suffixes = analyze_affixes(output_file, n, prefix_marker, suffix_marker)
+    _, prefixes, suffixes = analyze_affixes(output_file, n, in_prefix_nonterminal, in_suffix_nonterminal)
     # Seed the grammar with the prefixes.
-    grammar['1 1 ' + prefix_nonterminal].extend([convert_string_to_hex_chars(prefix) for prefix in prefixes])
+    grammar['1 1 ' + out_prefix_nonterminal].extend([convert_string_to_hex_chars(prefix) for prefix in prefixes])
     # Seed the grammar with the suffixes.
-    grammar['1 1 ' + suffix_nonterminal].extend([convert_string_to_hex_chars(suffix) for suffix in suffixes])
+    grammar['1 1 ' + out_suffix_nonterminal].extend([convert_string_to_hex_chars(suffix) for suffix in suffixes])
     return grammar
 
 def prepare_scholar_seeded_grammar(grammar, lk_file, prefix_nonterminal, suffix_nonterminal):
@@ -191,12 +194,12 @@ def read_linguistic_knowledge(lk_file):
         return prefixes, suffixes
 
 
-def analyze_affixes(file, n, prefix_marker, suffix_marker):
+def analyze_affixes(file, n, prefix_nonterminal, suffix_nonterminal):
     '''
     :param file: file containing grammar morph tree for each word.
     :param n: number indicating how many of the top affixes to return.
-    :param prefix_marker: name of the prefix nonterminal to search for
-    :param suffix_marker: name of the suffix nonterminal to search for
+    :param prefix_nonterminal: name of the prefix nonterminal to search for
+    :param suffix_nonterminal: name of the suffix nonterminal to search for
     :return: top n affixes, all prefixes, and all suffixes
     '''
     prefix_counter = {}
@@ -204,24 +207,22 @@ def analyze_affixes(file, n, prefix_marker, suffix_marker):
     with open(file, 'r', encoding='utf-8') as fin:
         for line in fin:
             line = line.strip()
-            fields = line.split('(')
             # Search for a nonterminal match with a morph RegEx given as input.
-            nonterminals_to_parse = prefix_marker + "|" + suffix_marker
-            all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
+            morphs = get_morphs_from_tree(line, [prefix_nonterminal, suffix_nonterminal])
             # Separate into respective affix counter.
-            for morph in all_morphs:
-                morph_type = morph[0]
-                is_prefix = re.match(prefix_marker, morph_type)
-                if is_prefix:
-                    if prefix_counter.get(morph[1]):
-                        prefix_counter[morph[1]] += 1
+            for nonterminal in morphs:
+                for morph in  morphs[nonterminal]:
+                    is_prefix = (nonterminal == prefix_nonterminal)
+                    if is_prefix:
+                        if prefix_counter.get(morph):
+                            prefix_counter[morph] += 1
+                        else:
+                            prefix_counter[morph] = 1
                     else:
-                        prefix_counter[morph[1]] = 1
-                else:
-                    if suffix_counter.get(morph[1]):
-                        suffix_counter[morph[1]] += 1
-                    else:
-                        suffix_counter[morph[1]] = 1
+                        if suffix_counter.get(morph):
+                            suffix_counter[morph] += 1
+                        else:
+                            suffix_counter[morph] = 1
 
     # Return top n affixes.
     # Sort prefixes.
@@ -253,82 +254,41 @@ def analyze_affixes(file, n, prefix_marker, suffix_marker):
 
     return n_affixes, prefix_x, suffix_y
 
-def convert_morph_tree_to_word(word_nonterminals, nonterminals_to_parse):
+def get_morphs_from_tree(tree, nonterminals):
     '''
-    Takes a morph tree such as:
-    "(Word (Prefix#151 ^^^) (Stem#2 (SubMorphs (SubMorph#22 (Chars (Char 0075)
+    :param treea: a line in the segmentation output
+    Example: "(Word (Prefix#151 ^^^) (Stem#2 (SubMorphs (SubMorph#22 (Chars (Char 0075)
     (Chars (Char 006e)))) (SubMorphs (SubMorph#11 (Chars (Char 0064)))))) (Suffix#2 $$$))"
-    And convert it to a list of affixes and their respective morph type.
-
-        :param word_nonterminals: List of all nonterminals in the grammar morph tree of a word.
-        (ex: ["Word", "Prefix#1", ...])
-        :param nonterminals_to_parse: string specifiying which nonterminals to parse by (ex: "Prefix|Stem|Suffix").
-        :return: a list of affixes and their respective morph type
+    :param nonterminals: the nonterminals to patse 
+    :return: a map of nonterminals and their textual values
     '''
 
-    if nonterminals_to_parse == "Char" or nonterminals_to_parse == "J_Char" or nonterminals_to_parse == "Ch_Char":
-        nonterminals_to_parse = "Chars"
+    morphs = defaultdict(list)
+    parts = tree.split()
+    for nonterminal in nonterminals:
+        read = False
+        count=0
+        current_chars = []
+        for part in parts:
+            if not read and re.match('^\(?'+nonterminal+'(#[0-9]+)?$', part):
+                read = True
+            elif read and re.match('^([a-f\d]{4,8})\)*$', part):
+                hex_str = part.replace(')', '')
+                current_chars.append(convert_hex_to_string(hex_str))
+            if read:
+                count += part.count('(')
+                count -= part.count(')')
+                if count <= 0:
+                    if len(current_chars) > 0:
+                        morph = ''.join(current_chars)
+                        morphs[nonterminal].append(morph)
+                    read = False
+                    count = 0
+                    current_chars = []
+    return morphs
+ 
 
-    curr_morph = "" # Keeps track of current morph in word_nonterminals list when iterating.
-    global_nonterminal = [] # Keeps track of nonterminal being searched for.
-    inner_children = [] # Keeps tracks of nonterminal children in
-    all_morphs = [] # Keeps
-    morph = ""
-    last_popped_morph = ""
-    to_parse = nonterminals_to_parse.split('|')
-    # Search for a nonterminal match with a morph RegEx given as input.
-    for curr_nonterminal in to_parse:
-        for nonterminal in word_nonterminals:
-            m = nonterminal.split()
-            # Keep track of children and current morph.
-            rgx = r'^' + curr_nonterminal + r'(#[0-9]+)?$'
-            r = re.search(rgx, m[0])
-            # Store information of current morph if necessary.
-            if morph and (len(global_nonterminal) == 0 or r):
-                new_morph = (curr_morph, morph)
-                all_morphs.append(new_morph)
-                if len(global_nonterminal) > 0:
-                    global_nonterminal.pop()
-                inner_children = []
-                morph = ""
-                curr_morph = ""
-            # Update current morph to search for if different from previous iteration.
-            if r:
-                curr_morph = m[0]
-            if curr_morph is not "":
-                if m[0] == curr_morph:
-                    global_nonterminal.append(m[0])
-                else:
-                    inner_children.append(m[0])
-                # Pop all ")".
-                if ")" in nonterminal:
-                    f = list(nonterminal)
-                    f.pop()  # Pop '/n' character.
-                    while ")" in f:
-                        last_ch = f.pop()
-                        if len(inner_children):
-                            last_popped_morph = inner_children.pop()
-                        else:
-                            global_nonterminal.pop()
-                            curr_morph = ""
-                            break
-                        if last_popped_morph == "Char" or last_popped_morph == "J_Char" or last_popped_morph == "Ch_Char":
-                            # Parse to hex value and convert.
-                            h = nonterminal.split()[1]
-                            e = h.find(")")
-                            ch = convert_hex_to_string(h[:e])
-                            # Add character to word.
-                            morph += ch
-                        if last_ch == '$' or len(inner_children) == 0:
-                            if ")" in f and global_nonterminal:
-                                global_nonterminal.pop()
-                            break
-    if morph:
-        new_morph = (curr_morph, morph)
-        all_morphs.append(new_morph)
-    return all_morphs
-
-def parse_PYAGS_segmentation_output(file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file):
+def parse_PYAGS_segmentation_output(file, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmented_text_file, segmented_dictionary_file):
     '''
     This function parses the output of the segmented_word morphologies into
     a human-readable format that denotes a segmented_word split into its morphemes
@@ -339,8 +299,9 @@ def parse_PYAGS_segmentation_output(file, nonterminals_to_parse, segmented_text_
 
     :param file: a txt file that contains each words' morphology trees
     Stem morph in characters
-    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials and the order that will
-    be parsed and returned in the final output
+    :param prefix_nonterminal: prefix nonterminal to parse
+    :param stem_nonterminal: stem nonterminal to parse
+    :param suffix_nonterminal: suffix nonterminal to parse
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
     and their respective word
@@ -355,36 +316,27 @@ def parse_PYAGS_segmentation_output(file, nonterminals_to_parse, segmented_text_
             line = line.strip()
             if len(line) == 0:
                 continue;
-            fields = line.split('(')
-            # Search for a field match with a morph RegEx given as input.
-            all_morphs = convert_morph_tree_to_word(fields[1:], nonterminals_to_parse)
-            # Append affixes together separated by a "+".
-            segmented_word = ""
-            full_word = ""
-            contains_stem = "Stem" in nonterminals_to_parse
-            stem_morph = ""
-            for morph in all_morphs:
-                full_word += morph[1]
-                # Append "+".
-                if segmented_word != "":
+            # Extract the morphemes given the nonterminals.
+            morphs = get_morphs_from_tree(line, [prefix_nonterminal, stem_nonterminal, suffix_nonterminal])
+            word = ''
+            segmented_word = ''
+            if prefix_nonterminal in morphs and len(morphs[prefix_nonterminal]) > 0:
+                word += ''.join(morphs[prefix_nonterminal])
+                segmented_word += '+'.join(morphs[prefix_nonterminal])
+            if stem_nonterminal in morphs and len(morphs[stem_nonterminal]) > 0:
+                if len(segmented_word) > 0:
                     segmented_word += "+"
-                # Enclose "Stem#[0-9]+" type morphs in "( ... )"
-                morph_type = morph[0]
-                is_stem = re.match(r'^Stem#[0-9]+', morph_type)
-                if is_stem:
-                    segmented_word += "("
-                    stem_morph = morph[1]
-                segmented_word += morph[1]
-                if is_stem:
-                    segmented_word += ")"
-            '''
-            # If Stem length is less than min_stem_length, then do not segment word at all.
-            if contains_stem and len(stem_morph) < min_stem_length:
-                segmented_word = "(" + full_word + ")" # between parentheses
-            '''
-            if word_segmentation_map.get(full_word) is None:
-                word_segmentation_map[full_word] = segmented_word
-            segmented_word_list.append((full_word, segmented_word))
+                word += ''.join(morphs[stem_nonterminal])
+                segmented_word += '('+'+'.join(morphs[stem_nonterminal])+')'
+            if suffix_nonterminal in morphs and len(morphs[suffix_nonterminal]) > 0:
+                if len(segmented_word) > 0:
+                    segmented_word += "+"
+                word += ''.join(morphs[suffix_nonterminal])
+                segmented_word += '+'.join(morphs[suffix_nonterminal])
+
+            if word_segmentation_map.get(word) is None:
+                word_segmentation_map[word] = segmented_word
+            segmented_word_list.append((word, segmented_word))
 
     # Write all segmented words to segmented_text_file.
     if segmented_text_file:
@@ -734,7 +686,7 @@ def segment_file(dic, txt_file, output_file, min_word_length_to_segment, multiwa
                 fout.write(full_line)
     return
 
-def parse_segment(word_morph_tree_file, nonterminals_to_parse, segmented_text_file,
+def parse_segment(word_morph_tree_file, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmented_text_file,
                   segmented_dictionary_file, to_parse_file, output_file,
                   min_word_length_to_segment=2, multiway_segmentation=False):
     '''
@@ -743,8 +695,9 @@ def parse_segment(word_morph_tree_file, nonterminals_to_parse, segmented_text_fi
     text file with their segmented version. This function is a wrapper to the
     functions: parse_PYAGS_segmentation_output and segment_file
     :param word_morph_tree_file: a txt file that contains each words' morphology trees
-    :param nonterminals_to_parse: a bar-separated string that denotes the nontermials that will be parsed
-    and returned in the final output e.g., "Prefix|Stem|Suffix"
+    :param prefix_nonterminal: prefix nonterminal to parse
+    :param stem_nonterminal: stem nonterminal to parse
+    :param suffix_nonterminal: suffix nonterminal to parse
     :param segmented_text_file: file location to write all word segmentations
     :param segmented_dictionary_file: file location to write all word segmentations
     and their respective word
@@ -762,7 +715,7 @@ def parse_segment(word_morph_tree_file, nonterminals_to_parse, segmented_text_fi
         if applicable (for example: PrefixMorph+Stem+SuffixMorph+SuffixMorph)
     :return:
     '''
-    map = parse_PYAGS_segmentation_output(word_morph_tree_file, nonterminals_to_parse, segmented_text_file, segmented_dictionary_file)
+    map = parse_PYAGS_segmentation_output(word_morph_tree_file, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmented_text_file, segmented_dictionary_file)
     segment_file(map, to_parse_file, output_file, min_word_length_to_segment, multiway_segmentation)
     return
 
