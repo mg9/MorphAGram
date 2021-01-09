@@ -22,8 +22,8 @@ The sampler requires two types of inputs: a grammar and a list of training units
 
 The first step is to provide an initial CFG (Context-Free grammar) and a list of words (one word per line) to MorphAGram, which in turn converts them into inputs to PYAGS. The initial CFG should have two parameters associated with each production rule (default values are zeros). The first number represents the value of the probability of the rule in the generator, and the second number is the value of the α parameter in the Pitman-Yor process. Below is an example CFG.
 
-*1 1 Word --> Prefix Stem Suffix__
-Prefix --> ^^^__
+*1 1 Word --> Prefix Stem Suffix<br/>
+Prefix --> ^^^<br/>
 Prefix --> ^^^ PrefixMorphs__
 1 1 PrefixMorphs --> PrefixMorph PrefixMorphs__
 1 1 PrefixMorphs --> PrefixMorph__
