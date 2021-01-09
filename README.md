@@ -22,7 +22,7 @@ The sampler requires two types of inputs: a grammar and a list of training units
 
 The first step is to provide an initial CFG (Context-Free grammar) and a list of words (one word per line) to MorphAGram, which in turn converts them into inputs to PYAGS. The initial CFG should have two parameters associated with each production rule (default values are zeros). The first number represents the value of the probability of the rule in the generator, and the second number is the value of the α parameter in the Pitman-Yor process. Below is an example CFG.
 
-`*1 1 Word --> Prefix Stem Suffix<br/>
+*1 1 Word --> Prefix Stem Suffix<br/>
 Prefix --> ^^^<br/>
 Prefix --> ^^^ PrefixMorphs<br/>
 1 1 PrefixMorphs --> PrefixMorph PrefixMorphs<br/>
@@ -38,7 +38,7 @@ SuffixMorph --> SubMorphs<br/>
 1 1 SubMorphs --> SubMorph<br/>
 SubMorph --> Chars<br/>
 1 1 Chars --> Char<br/>
-1 1 Chars --> Char Chars*`
+1 1 Chars --> Char Chars*
 
 MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  Here is how to preprocess the data for each setup:
 
@@ -59,14 +59,14 @@ The standard setup is a language-independent one, with no scholar knowledge and 
 #### b) Scholar-Seeded Setup
 The scholar-seeded setup seeds scholar information in the form of prefixes and suffixes into the grammar tree prior to running the learning phase. The setup first requires the preparation of an LK file (LK=Linguistic Knowledge). An example LK file should be formatted as follows, where it contains an unlimited number of prefixes and suffixes.
 
-`*###PREFIXES###*<br/>
+*###PREFIXES###*<br/>
 *prefix1*<br/>
 *prefix2*<br/>
 *prefix3*<br/>
 *###SUFFIXES###*<br/>
 *prefix1*<br/>
 *prefix2*<br/>
-*prefix3*`
+*prefix3*
 
 ###### Steps:
 \# Read the initial lexicon (word list), and convert it into HEX.<br/>
