@@ -22,23 +22,23 @@ The sampler requires two types of inputs: a grammar and a list of training units
 
 The first step is to provide an initial CFG (Context-Free grammar) and a list of words (one word per line) to MorphAGram, which in turn converts them into inputs to PYAGS. The initial CFG should have two parameters associated with each production rule (default values are zeros). The first number represents the value of the probability of the rule in the generator, and the second number is the value of the α parameter in the Pitman-Yor process. Below is an example CFG.
 
-*1 1 Word --> Prefix Stem Suffix
-Prefix --> ^^^
-Prefix --> ^^^ PrefixMorphs
-1 1 PrefixMorphs --> PrefixMorph PrefixMorphs
-1 1 PrefixMorphs --> PrefixMorph
-PrefixMorph --> SubMorphs
-Stem --> SubMorphs
-Suffix --> $$$
-Suffix --> SuffixMorphs $$$
-1 1 SuffixMorphs --> SuffixMorph SuffixMorphs
-1 1 SuffixMorphs --> SuffixMorph
-SuffixMorph --> SubMorphs
-1 1 SubMorphs --> SubMorph SubMorphs
-1 1 SubMorphs --> SubMorph
-SubMorph --> Chars
-1 1 Chars --> Char
-1 1 Chars --> Char Chars*`
+*1 1 Word --> Prefix Stem Suffix__
+Prefix --> ^^^__
+Prefix --> ^^^ PrefixMorphs__
+1 1 PrefixMorphs --> PrefixMorph PrefixMorphs__
+1 1 PrefixMorphs --> PrefixMorph__
+PrefixMorph --> SubMorphs__
+Stem --> SubMorphs__
+Suffix --> $$$__
+Suffix --> SuffixMorphs $$$__
+1 1 SuffixMorphs --> SuffixMorph SuffixMorphs__
+1 1 SuffixMorphs --> SuffixMorph__
+SuffixMorph --> SubMorphs__
+1 1 SubMorphs --> SubMorph SubMorphs__
+1 1 SubMorphs --> SubMorph__
+SubMorph --> Chars__
+1 1 Chars --> Char__
+1 1 Chars --> Char Chars*__`
 
 MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  Here is how to preprocess the data for each setup:
 
