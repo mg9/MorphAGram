@@ -129,8 +129,12 @@ def prepare_cascaded_grammar(grammar, segmentation_path, n, in_prefix_nontermina
         _, prefixes, suffixes = get_top_affixes(segmentation_path, n, in_prefix_nonterminal, in_suffix_nonterminal)
         #Seed the grammar with the prefixes.
         grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
+        #grammar['1 1 ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
         #Seed the grammar with the suffixes.
         grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
+        #grammar['1 1 ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
         return grammar
     except:
         print(ERROR_MESSAGE)
@@ -152,8 +156,12 @@ def prepare_scholar_seeded_grammar(grammar, lk_path, out_prefix_nonterminal, out
         prefixes, suffixes = read_linguistic_knowledge(lk_path)
         #Seed the grammar with the prefixes.
         grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
+        #grammar['1 1 ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
         #Seed the grammar with the suffixes.
         grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
+        #grammar['1 1 ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
         return grammar
     except:
         print(ERROR_MESSAGE)
