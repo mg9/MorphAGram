@@ -93,10 +93,10 @@ The cascaded setup approximates the effect of the scholar-seeded setup in a lang
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
 \# Read the initial CFG.<br/>
 `grammar = read_grammar(grammar_path)`<br/>
-\# Read the automatically generated affixes from the segmentation output of some learning phase.<br/>
+\# Read the automatically generated affixes from the segmentation output of a prior learning phase.<br/>
 `cascaded_grammar = prepare_cascaded_grammar(grammar, segmentation_output_path, number_of_affixes_to_read, prefix_nonterminal_to_read, suffix_nonterminal_to_read, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into)`<br/>
 `write_grammar(cascaded_grammar, cascaded_grammar_path)`<br/>
-\# Append the HEX encoded characters as terminals.<br/>
+\# Append the Hex encoded characters as terminals.<br/>
 \# encoded_lexicon_path and final_grammar_path then become the input to the PYAGS sampler.<br/>
 `appended_cascaded_grammar = add_chars_to_grammar(cascaded_grammar, hex_chars)`<br/>
 `write_grammar(appended_cascaded_grammar, final_grammar_path)`<br/>
@@ -110,7 +110,7 @@ Download and run the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Ma
 In order to replicare our results in [MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation](https://www.aclweb.org/anthology/2020.lrec-1.879.pdf "MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation"), please use the following parameters:
 `-r 0 -d 10 -x 10 -D -E -e 1 -f 1 -g 10 -h 0.1 -w 1 -T 1 -m 0 -n 500 -R`
 
-For complete information about how the sampler works, please refer t the following [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
+For complete information about how the sampler works, see [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
 
 ---
 
@@ -124,9 +124,9 @@ Use this mode to segment words that are already seen in the training data.
 \# The step requires specifying which nonterminals to split on.<br/>
 \# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task.<br/>
 `segmentation_model = parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmentation_eval_output_path , min_word_length_to_segment)`<br/>
-\# Segment white-space tokenized text string.<br/>
+\# Segment a white-space tokenized text string.<br/>
 `segmented_text = segment_text(text_to_segment, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
-\# Segment white-space tokenized text file.<br/>
+\# Segment a white-space tokenized text file.<br/>
 `segment_file(file_to_segment, output_path, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
 
 #### Deductive Segmentation:
