@@ -118,12 +118,11 @@ For complete information about how the sampler works, see [paper](https://cocosc
 
 #### Transductive Segmentation:
 Use this mode to segment words that are already seen in the training data.<br/>
-This mode is only applicable when the prefixes, stems and suffixes are represented by either the same nonterminals or three different nonterminals.
 
 ###### Steps:
 \# Create a segmentation model given the PYAGS segmentation output.<br/>
 \# The step requires specifying which nonterminals to split on.<br/>
-\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task.<br/>
+\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task. However, this is only applicable when the prefixes, stems and suffixes are represented by the same nonterminal or three different nonterminals.<br/>
 `segmentation_model = parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmentation_eval_output_path , min_word_length_to_segment)`<br/>
 \# Segment a white-space tokenized text string.<br/>
 `segmented_text = segment_text(text_to_segment, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
@@ -133,7 +132,7 @@ This mode is only applicable when the prefixes, stems and suffixes are represent
 #### Deductive Segmentation:
 Use this mode to segment any word (either seen or unseen in the training data).<br/>
 There are two ways to run deductive segmentation:
-- The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with valid prefix-suffix compatibility. This MLE method is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
+- The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with valid prefix-suffix compatibility.
 - The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/code/cky.tbz "here").
 
 ###### Steps:
@@ -141,6 +140,9 @@ There are two ways to run deductive segmentation:
 `grammar = generate_grammar(pyags_output_grammar_path)`<br/>
 `write_grammar(grammar, final_grammar_path)`<br/>
 \# Apply the CKY parser.
+
+#### Important Note:
+The segmentation model is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
 
 ---
 
