@@ -158,13 +158,13 @@ morph count, morph frequency and morph probability (the probability that a seque
 `gold_info, morph_info = analyze_gold(gold_path)`<br/>
 
 #### 2. Segmentation-Output Analysis
-\# output_path and gold_path are tabular files; the first column contains the words, and the second column contains the segmentation as space-separated morphs (segmentation). In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
+\# output_path and gold_path are tabular files; the first column contains the words, and the second column contains the segmentation as space-separated morphs. In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
 \# morh_info: a map that contains analysis information for each morph. This includes:<br/>
 morph count, morph frequency, morph probability (the probability that a sequence of characters forms the corresponding morph), morph precision, morph recall and morph F1-score.<br/>
 `morph_info = analyze_gold(output_path, gold_path)`<br/>
 
 #### 3. Feature Extraction
-\# Given a PYAGS segmentation output, the following function extracts affix-relatred information that could then be used as ML features as pointed out [here](https://www.aclweb.org/anthology/W18-5808.pdf "here").<br/>
+\# Given a PYAGS segmentation output, this function extracts affix-relatred information that could then be used as ML features as pointed out [here](https://www.aclweb.org/anthology/W18-5808.pdf "here").<br/>
 \# For each simple prefix, complex prefix, simple suffix and complex suffix, the information includes: type count, token count, average count per word and average length.<br/>
-\# The function is only applicable when the grammar assigns different nonterminals to prefixes and suffixes.<br/>
+\# The function is only applicable when the prefixes and suffixes are represented by different nonterminals.<br/>
 `affix_info=get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_count_of_affix_to_consider)`<br/>
