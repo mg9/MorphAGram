@@ -118,6 +118,7 @@ For complete information about how the sampler works, see [paper](https://cocosc
 
 #### Transductive Segmentation:
 Use this mode to segment words that are already seen in the training data.
+This mode is only applicable when the prefixes, stems and suffixes are represented by either the same nonterminals or three different nonterminals.
 
 ###### Steps:
 \# Create a segmentation model given the PYAGS segmentation output.<br/>
@@ -130,16 +131,16 @@ Use this mode to segment words that are already seen in the training data.
 `segment_file(file_to_segment, output_path, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
 
 #### Deductive Segmentation:
-Use this mode to segment any word (either seen or unseen in the training data).
-
-###### Steps:
-There are two ways to run deductive segmentation:<br/>
-- The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with a valid premix-suffix compatibility. This is only applicable when the grammar assigns different nonterminals to prefixes, stems and suffixes.<br/>
+Use this mode to segment any word (either seen or unseen in the training data).<br/>
+There are two ways to run deductive segmentation:<br/><br/>
+- The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with a valid premix-suffix compatibility. This MLE method is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
 - The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser here:<br/>
 http://web.science.mq.edu.au/~mjohnson/Software.htm<br/>
-The conversion is achieved as follows:<br/>
+###### Steps:
+\# Normalize the grammar output.
 `grammar = generate_grammar(pyags_output_grammar_path)`<br/>
 `write_grammar(grammar, final_grammar_path)`<br/>
+\# Apply the CKY parser.
 
 ---
 
