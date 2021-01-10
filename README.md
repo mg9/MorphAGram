@@ -134,7 +134,7 @@ This mode is only applicable when the prefixes, stems and suffixes are represent
 Use this mode to segment any word (either seen or unseen in the training data).<br/>
 There are two ways to run deductive segmentation:
 - The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with valid prefix-suffix compatibility. This MLE method is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
-- The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/Software.htm "here").
+- The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/code/cky.tbz "here").
 
 ###### Steps:
 \# Normalize the grammar output.
@@ -156,7 +156,7 @@ morph count, morph frequency and morph probability (the probability that a seque
 `gold_info, morph_info = analyze_gold(gold_path)`<br/>
 
 #### 2. Segmentation-Output Analysis
-\# output_path and gold_path are tabular files, where the first column contains the words and the second column containsthe segmentations, where a segmentation is white-spaced morphs. In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
+\# output_path and gold_path are tabular files, where the first column contains the words and the second column contains the segmentations, where a segmentation is white-spaced morphs. In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
 \# morh_info: a map that contains analysis information for each morh. This includes:<br/>
 morph count, morph frequency, morph probability (the probability that a sequence of characters forms the corresponding morph), morph precision, morph recall and morph F1-score.<br/>
 `morph_info = analyze_gold(output_path, gold_path)`<br/>
