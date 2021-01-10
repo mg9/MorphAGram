@@ -4,7 +4,9 @@
 
 [MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation](https://www.aclweb.org/anthology/2020.lrec-1.879.pdf "MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation")
 
-[Automatically Tailoring Unsupervised Morphological Segmentation to the Language](https://www.aclweb.org/anthology/W18-5808.pdf "Automatically Tailoring Unsupervised Morphological Segmentation to the Language")
+[Extending the Use of Adaptor Grammars for Unsupervised
+Morphological Segmentation of Unseen Languages](https://www.aclweb.org/anthology/C16-1086.pdf "Extending the Use of Adaptor Grammars for Unsupervised
+Morphological Segmentation of Unseen Languages")
 
 [Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages](https://www.aclweb.org/anthology/W19-4222.pdf "Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages")
 
