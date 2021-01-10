@@ -47,7 +47,7 @@ MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  
 #### a) Standard Setup
 The standard setup is a language-independent one, with no scholar knowledge and with only one learning phase.
 
-###### Steps:
+##### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
@@ -70,7 +70,7 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 *prefix2*<br/>
 *prefix3*
 
-###### Steps:
+##### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
@@ -87,7 +87,7 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 #### c) Cascaded Setup
 The cascaded setup approximates the effect of the scholar-seeded setup in a language-independent manner, where the seeded affixes are automatically  generated in one learning phase and then seeded into the grammar tree in a second round of learning.
 
-###### Steps:
+##### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
@@ -119,10 +119,10 @@ For complete information about how the sampler works, see [paper](https://cocosc
 #### Transductive Segmentation:
 Use this mode to segment words that are already seen in the training data.<br/>
 
-###### Steps:
+##### Steps:
 \# Create a segmentation model given the PYAGS segmentation output.<br/>
 \# The step requires specifying which nonterminals to split on.<br/>
-\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task. However, this is only applicable when the prefixes, stems and suffixes are represented by the same nonterminal or three different nonterminals.<br/>
+\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task. However, this is only applicable when the prefixes, stems and suffixes are represented by either the same nonterminal or three different nonterminals.<br/>
 `segmentation_model = parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmentation_eval_output_path , min_word_length_to_segment)`<br/>
 \# Segment a white-space tokenized text string.<br/>
 `segmented_text = segment_text(text_to_segment, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
@@ -135,7 +135,7 @@ There are two ways to run deductive segmentation:
 - The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with valid prefix-suffix compatibility.
 - The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/code/cky.tbz "here").
 
-###### Steps:
+##### Steps:
 \# Normalize the grammar output.
 `grammar = generate_grammar(pyags_output_grammar_path)`<br/>
 `write_grammar(grammar, final_grammar_path)`<br/>
