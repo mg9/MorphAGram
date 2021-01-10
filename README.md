@@ -149,7 +149,7 @@ The segmentation model is only applicable when the prefixes, stems and suffixes 
 ### Utility Functions
 
 #### 1. Language analysis
-\# The analysis is based on gold data, where gold_path is a tabular file, where the first column contains the words and the second column contains comma separated segmentations, where a segmentation is white-spaced morphs.<br/>
+\# The analysis is based on gold data, where gold_path is a tabular file; the first column contains the words, and the second column contains comma-separated segmentations as space-separated morphs.<br/>
 \# The analysis is assumed to be applicable to the corresponding language as long as the gold is a well representative sample.<br/>
 \# gold_info: a map that contains analysis information for the gold. This includes:<br/>
 word-morph mapping, number of morphs, unweighted/weighted degree of ambiguity, average token/type morph length, average number of morphs per word and the maximum number of morphs in a word.<br/>
@@ -158,8 +158,8 @@ morph count, morph frequency and morph probability (the probability that a seque
 `gold_info, morph_info = analyze_gold(gold_path)`<br/>
 
 #### 2. Segmentation-Output Analysis
-\# output_path and gold_path are tabular files, where the first column contains the words and the second column contains the segmentations, where a segmentation is white-spaced morphs. In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
-\# morh_info: a map that contains analysis information for each morh. This includes:<br/>
+\# output_path and gold_path are tabular files; the first column contains the words, and the second column contains the segmentation as space-separated morphs (segmentation). In the case of gold_path, multiple comma-separated segmentations can be listed.<br/>
+\# morh_info: a map that contains analysis information for each morph. This includes:<br/>
 morph count, morph frequency, morph probability (the probability that a sequence of characters forms the corresponding morph), morph precision, morph recall and morph F1-score.<br/>
 `morph_info = analyze_gold(output_path, gold_path)`<br/>
 
