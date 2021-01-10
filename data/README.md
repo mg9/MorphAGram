@@ -25,12 +25,12 @@ X6: Seeded Suffix Nonterminal
 
 #### Important Notes
 
-Every output file is produced 5 times in 5 separate runs, indicated with the `-1`, `-2`, `-3`, `-4` and `-5` suffixes. The results are the averages over the 5 runs.
+1. Every output file is produced 5 times in 5 separate runs, indicated with the `-1`, `-2`, `-3`, `-4` and `-5` suffixes. The results are the averages over the 5 runs.
 
-In the publications, we do not adapt the seeded affixes (either in the scholar_seeded setting or the cascaded setting). Further experiments show that  adapting the seeded affixes improve the results for most of the development languages. The current code in the repo is updated accordingly. In order to replicate the published results uncomment the lines following the comment below and comment the preceding ones.
+2. In the publications, we do not adapt the seeded affixes (either in the scholar_seeded setting or the cascaded setting). Further experiments show that  adapting the seeded affixes improve the results for most of the development languages. The current code in the repo is updated accordingly. In order to replicate the published results uncomment the lines following the comment below and comment the preceding ones.
 `#Use the following line instead for non-adapted seeded affixes in order to replicate the published results.`
 
-In the publications, we use the PrStSu2b+Co+SM grammar in the first round of the cascaded settings. Further experiments show that PrStSu+SM and PrStSu2a+SM can be used instead as they are as efficient as PrStSu2b+Co+SM and faster in sampling.
+3. In the publications, we use the PrStSu2b+Co+SM grammar in the first round of the cascaded settings. Further experiments show that PrStSu+SM and PrStSu2a+SM can be used instead as they are as efficient as PrStSu2b+Co+SM and faster in sampling.
 
-In the cascaded setups, the affixes are read from the output of the first round of learning based on the nonterminals specified in X2 and X4.
+4. In the cascaded setups, the affixes are read from the output of the first round of learning based on the nonterminals specified in X2 and X4.
 
