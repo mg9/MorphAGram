@@ -1,4 +1,4 @@
-##  MorphAGram: A Framework for Unsupervised and SemiSupervised Morphological Segmentation using Adaptor Grammars ##
+##  MorphAGram: A Framework for Unsupervised and Semi-Supervised Morphological Segmentation using Adaptor Grammars ##
 
 ### Publications
 
@@ -8,9 +8,9 @@
 Morphological Segmentation of Unseen Languages](https://www.aclweb.org/anthology/C16-1086.pdf "Extending the Use of Adaptor Grammars for Unsupervised
 Morphological Segmentation of Unseen Languages")
 
-[Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages](https://www.aclweb.org/anthology/W19-4222.pdf "Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages")
-
 [Automatically Tailoring Unsupervised Morphological Segmentation to the Language](https://www.aclweb.org/anthology/W18-5808.pdf "Automatically Tailoring Unsupervised Morphological Segmentation to the Language")
+
+[Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages](https://www.aclweb.org/anthology/W19-4222.pdf "Unsupervised Morphological Segmentation for Low-Resource Polysynthetic Languages")
 
 ---
 
@@ -18,9 +18,9 @@ Morphological Segmentation of Unseen Languages")
 
 MorphAGram uses the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mark Johnson, for training. The sampler can be downloaded from [here](http://web.science.mq.edu.au/~mjohnson/code/py-cfg-2013-09-23.tgz "here").
 
-For complete information about how the sampler works, please refer t the following [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
+For complete information about how the sampler works, see [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
 
-The sampler requires two types of inputs: a grammar and a list of training units. For the purpose of unsupervised morphological segmentation, a grammar should specify word structure, while the list of training units is a list of raw words. In addition, MorphAGram requires the text to be in the Hex format in order to meet the language-independence assumption and to escape special characters. Also the grammar should have the characters in the word list as terminals.
+The sampler requires two types of inputs: a grammar and a list of training units. For the purpose of morphological segmentation, a grammar should specify word structure, while the list of training units is a list of words (a lexicon). On the other side, MorphAGram requires the text to be in the Hex format in order to meet the language-independence assumption and to escape special characters. Also the grammar should have the characters that form the input words as terminals.
 
 The first step is to provide an initial CFG (Context-Free grammar) and a list of words (one word per line) to MorphAGram, which in turn converts them into inputs to PYAGS. The initial CFG should have two parameters associated with each production rule (default values are zeros). The first number represents the value of the probability of the rule in the generator, and the second number is the value of the α parameter in the Pitman-Yor process. Below is an example CFG.
 
