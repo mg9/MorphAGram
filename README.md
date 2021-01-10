@@ -78,14 +78,14 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 `grammar = read_grammar(grammar_path)`<br/>
 \# Seed affixes into the grammar, where the affixes are read from the LK file.<br/>
 `ss_grammar = prepare_scholar_seeded_grammar(grammar, linguistic_knowledge_path, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into)`<br/>
-`write_grammar(ss_grammar, ss_grammar path)`<br/>
-\# Append the HEX encoded characters as terminals.<br/>
+`write_grammar(ss_grammar, ss_grammar_path)`<br/>
+\# Append the Hex encoded characters as terminals.<br/>
 \# encoded_lexicon_path and final_grammar_path then become the input to the PYAGS sampler.<br/>
 `appended_ss_grammar = add_chars_to_grammar(ss_grammar, hex_chars)`<br/>
 `write_grammar(appended_ss_grammar, final_grammar_path)`<br/>
 
 #### c) Cascaded Setup
-The cascaded setup approximates the effects of the scholar-seeded setup in a language-independent manner, where affixes are generated automatically in one learning phase and then seeded into the grammar tree in a second round of learning.
+The cascaded setup approximates the effect of the scholar-seeded setup in a language-independent manner, where the seeded affixes are automatically  generated in one learning phase and then seeded into the grammar tree in a second round of learning.
 
 ###### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
