@@ -136,7 +136,7 @@ There are two ways to run deductive segmentation:
 - The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/code/cky.tbz "here").
 
 ##### Steps:
-\# Normalize the grammar output.
+\# Normalize the grammar output.<br/>
 `grammar = generate_grammar(pyags_output_grammar_path)`<br/>
 `write_grammar(grammar, final_grammar_path)`<br/>
 \# Apply the CKY parser.
