@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
 
+from constants import *
+
 def convert_string_to_hex(string):
     """
     This function converts a regular string into its HEX representation.
