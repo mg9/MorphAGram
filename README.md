@@ -14,7 +14,7 @@ Morphological Segmentation of Unseen Languages")
 
 ---
 
-### Preprocessing Phase
+### Preprocessing
 
 MorphAGram uses the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mark Johnson, for training. The sampler can be downloaded from [here](http://web.science.mq.edu.au/~mjohnson/code/py-cfg-2013-09-23.tgz "here").
 
@@ -103,7 +103,7 @@ The cascaded setup approximates the effect of the scholar-seeded setup in a lang
 
 ---
 
-### Training Phase
+### Training
 
 Download and run the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mark Johnson, where the input to the sampler is the output of the preprocessing phase. The sampler can be downloaded from [here](http://web.science.mq.edu.au/~mjohnson/code/py-cfg-2013-09-23.tgz "here").
 
@@ -114,7 +114,7 @@ For complete information about how the sampler works, see [paper](https://cocosc
 
 ---
 
-### Segmentation Phase
+### Segmentation
 
 #### Transductive Segmentation:
 Use this mode to segment words that are already seen in the training data.<br/>
@@ -146,7 +146,7 @@ The segmentation model is only applicable when the prefixes, stems and suffixes 
 
 ---
 
-### Utility Functions
+### Analysis
 
 #### 1. Language analysis
 \# The analysis is based on gold data, where gold_path is a tabular file; the first column contains the words, and the second column contains comma-separated segmentations as space-separated morphs.<br/>
