@@ -48,7 +48,7 @@ MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  
 The standard setup is a language-independent one, with no scholar knowledge and with only one learning phase.
 
 ###### Steps:
-\# Read the initial lexicon (word list), and convert it into HEX.<br/>
+\# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
 \# Read the initial CFG and append the HEX encoded characters as terminals.<br/>
@@ -59,7 +59,7 @@ The standard setup is a language-independent one, with no scholar knowledge and 
 
 
 #### b) Scholar-Seeded Setup
-The scholar-seeded setup seeds scholar information in the form of prefixes and suffixes into the grammar tree prior to running the learning phase. The setup first requires the preparation of an LK file (LK=Linguistic Knowledge). An example LK file should be formatted as follows, where it contains an unlimited number of prefixes and suffixes.
+The scholar-seeded setup seeds scholar information in the form of prefixes and suffixes into the grammar tree prior to running the learning phase. The setup first requires the preparation of an LK file (LK=Linguistic Knowledge). An example LK file is shown below, where it may contain any number of prefixes and suffixes.
 
 *###PREFIXES###*<br/>
 *prefix1*<br/>
@@ -71,7 +71,7 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 *prefix3*
 
 ###### Steps:
-\# Read the initial lexicon (word list), and convert it into HEX.<br/>
+\# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
 \# Read the initial CFG.<br/>
@@ -88,7 +88,7 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 The cascaded setup approximates the effects of the scholar-seeded setup in a language-independent manner, where affixes are generated automatically in one learning phase and then seeded into the grammar tree in a second round of learning.
 
 ###### Steps:
-\# Read the initial lexicon (word list), and convert it into HEX.<br/>
+\# Read the initial lexicon (word list), and convert it into Hex.<br/>
 `words, encoded_words, hex_chars = process_words(lexicon_path)`<br/>
 `write_encoded_words(encoded_words, encoded_lexicon_path)`<br/>
 \# Read the initial CFG.<br/>
