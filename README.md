@@ -117,7 +117,7 @@ For complete information about how the sampler works, see [paper](https://cocosc
 ### Segmentation Phase
 
 #### Transductive Segmentation:
-Use this mode to segment words that are already seen in the training data.
+Use this mode to segment words that are already seen in the training data.<br/>
 This mode is only applicable when the prefixes, stems and suffixes are represented by either the same nonterminals or three different nonterminals.
 
 ###### Steps:
@@ -132,7 +132,7 @@ This mode is only applicable when the prefixes, stems and suffixes are represent
 
 #### Deductive Segmentation:
 Use this mode to segment any word (either seen or unseen in the training data).<br/>
-There are two ways to run deductive segmentation:<br/><br/>
+There are two ways to run deductive segmentation:
 - The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with a valid premix-suffix compatibility. This MLE method is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
 - The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser here:<br/>
 http://web.science.mq.edu.au/~mjohnson/Software.htm<br/>
