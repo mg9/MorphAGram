@@ -98,7 +98,7 @@ def analyze_gold(gold_path):
 
 def analyze_output(output_path, gold_path):
     """
-    This function analyzes the performance of output segmentation given the gold.
+    This function analyzes the performance of system segmentation given the gold.
     :param output_path: the path of the output segmentation
     :param gold_path: the path of the gold segmentation
     :return: morph-information (for each morph): count, frequency, probability when it appears,
