@@ -79,7 +79,7 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 \# Read the initial CFG.<br/>
 `grammar = read_grammar(grammar_path)`<br/>
 \# Seed affixes into the grammar, where the affixes are read from the LK file.<br/>
-`ss_grammar = prepare_scholar_seeded_grammar(grammar, linguistic_knowledge_path, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into, concentration_parameter_a, concentration_parameter_b)`<br/>
+`ss_grammar = prepare_scholar_seeded_grammar(grammar, linguistic_knowledge_path, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into, concerntration_param_alphaa, concerntration_param_alphab)`<br/>
 `write_grammar(ss_grammar, ss_grammar_path)`<br/>
 \# Append the Hex encoded characters as terminals.<br/>
 \# encoded_lexicon_path and final_grammar_path then become the input to the PYAGS sampler.<br/>
@@ -96,7 +96,7 @@ The cascaded setup approximates the effect of the scholar-seeded setup in a lang
 \# Read the initial CFG.<br/>
 `grammar = read_grammar(grammar_path)`<br/>
 \# Read the automatically generated affixes from the segmentation output of a prior learning phase.<br/>
-`cascaded_grammar = prepare_cascaded_grammar(grammar, segmentation_output_path, number_of_affixes_to_read, prefix_nonterminal_to_read, suffix_nonterminal_to_read, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into, concentration_parameter_a, concentration_parameter_b)`<br/>
+`cascaded_grammar = prepare_cascaded_grammar(grammar, segmentation_output_path, number_of_affixes_to_read, prefix_nonterminal_to_read, suffix_nonterminal_to_read, prefix_nonterminal_to_seed_into, suffix_nonterminal_to_seed_into, concerntration_param_alphaa, concerntration_param_alphab)`<br/>
 `write_grammar(cascaded_grammar, cascaded_grammar_path)`<br/>
 \# Append the Hex encoded characters as terminals.<br/>
 \# encoded_lexicon_path and final_grammar_path then become the input to the PYAGS sampler.<br/>
