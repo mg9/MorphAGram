@@ -112,7 +112,7 @@ def add_chars_to_grammar(grammar, hex_chars):
         print(ERROR_MESSAGE)
         return None
 
-def prepare_cascaded_grammar(grammar, segmentation_path, n, in_prefix_nonterminal, in_suffix_nonterminal, out_prefix_nonterminal, out_suffix_nonterminal):
+def prepare_cascaded_grammar(grammar, segmentation_path, n, in_prefix_nonterminal, in_suffix_nonterminal, out_prefix_nonterminal, out_suffix_nonterminal, concerntration_param_a, concerntration_param_b):
     """
     This function seeds a grammar tree with prefixes and suffixes read from the output of some grammar.
     :param grammar: grammar map
@@ -122,32 +122,38 @@ def prepare_cascaded_grammar(grammar, segmentation_path, n, in_prefix_nontermina
     :param n: the number of most frequent affixes to extract and seed
     :param out_prefix_nonterminal: the prefix nonterminal to seed the prefixes into
     :param out_suffix_nonterminal: the suffix nonterminal to seed the suffixes into
+    :param concerntration_param_a: concentration parameter αA
+    :param concerntration_param_b: concentration parameter αB
     :return: cascaded grammar map
     """
 
     try:
         _, prefixes, suffixes = get_top_affixes(segmentation_path, n, in_prefix_nonterminal, in_suffix_nonterminal)
         #Seed the grammar with the prefixes.
-        grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
-        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
-        #grammar['1 1 ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        if concerntration_param_a == 0 and concerntration_param_b == 0:
+            grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        else:
+            grammar[str(concerntration_param_a) + ' ' + str(concerntration_param_b) + ' ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
         #Seed the grammar with the suffixes.
-        grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
-        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
-        #grammar['1 1 ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        if concerntration_param_a == 0 and concerntration_param_b == 0:
+            grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        else:
+            grammar[str(concerntration_param_a) + ' ' + str(concerntration_param_b) + ' ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
         return grammar
     except:
         print(ERROR_MESSAGE)
         return None
 
 
-def prepare_scholar_seeded_grammar(grammar, lk_path, out_prefix_nonterminal, out_suffix_nonterminal):
+def prepare_scholar_seeded_grammar(grammar, lk_path, out_prefix_nonterminal, out_suffix_nonterminal, concerntration_param_a, concerntration_param_b):
     """
     This function seeds a grammar tree with prefixes and suffixes read from an LK file (LK stands for Loinguistic Knowledge).
     :param grammar: grammar map
     :param lk_path: linguistic-knowledge file path (see examples under data)
     :param out_prefix_nonterminal: the prefix nonterminal to seed the prefixes into
     :param out_suffix_nonterminal: the suffix nonterminal to seed the suffixes into
+    :param concerntration_param_a: concentration parameter αA
+    :param concerntration_param_b: concentration parameter αB
     :return: scholar-seeded grammar map
     """
 
@@ -155,13 +161,15 @@ def prepare_scholar_seeded_grammar(grammar, lk_path, out_prefix_nonterminal, out
         #Read the prefixes and suffixes from the file.
         prefixes, suffixes = read_linguistic_knowledge(lk_path)
         #Seed the grammar with the prefixes.
-        grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
-        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
-        #grammar['1 1 ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        if concerntration_param_a == 0 and concerntration_param_b == 0:
+            grammar[out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
+        else:
+            grammar[str(concerntration_param_a) + ' ' + str(concerntration_param_b) + ' ' + out_prefix_nonterminal].extend([convert_string_to_hex(prefix) for prefix in prefixes])
         #Seed the grammar with the suffixes.
-        grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
-        #Use the following line instead for non-adapted seeded affixes in order to replicate the published results.
-        #grammar['1 1 ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        if concerntration_param_a == 0 and concerntration_param_b == 0:
+            grammar[out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
+        else:
+            grammar[str(concerntration_param_a) + ' ' + str(concerntration_param_b) + ' ' + out_suffix_nonterminal].extend([convert_string_to_hex(suffix) for suffix in suffixes])
         return grammar
     except:
         print(ERROR_MESSAGE)
