@@ -16,6 +16,12 @@ Morphological Segmentation of Unseen Languages")
 
 ---
 
+### Requirements
+
+Python 3.7.0+
+
+---
+
 ### Preprocessing
 
 MorphAGram uses the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mark Johnson, for training. The sampler can be downloaded from [here](http://web.science.mq.edu.au/~mjohnson/code/py-cfg-2013-09-23.tgz "here").
