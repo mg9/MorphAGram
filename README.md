@@ -124,33 +124,34 @@ For complete information about how the sampler works, see [paper](https://cocosc
 
 ### Segmentation
 
-#### Transductive Segmentation:
-Use this mode to segment words that are already seen in the training data.<br/>
+#### Method1:
+\# If a word is seen in the training data, its segmentation is read from the segmentation output of the learning process.<br/>
+\# If a word is not seen in the training data, it's analyzed by finding the split that gives the highest MLE probability across its morphemes, along with the selection of compatible prefixes and suffixes. The information of the morphemes and their MLE probabilities and compatibility are driven from the the segmentation output of the learning process.
+\# This method is applicable only when the prefixes, stems and suffixes are represented by three different nonterminals.
 
 ##### Steps:
 \# Create a segmentation model given the PYAGS segmentation output.<br/>
 \# The step requires specifying which nonterminals to split on.<br/>
-\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task. However, this is only applicable when the prefixes, stems and suffixes are represented by either the same nonterminal or three different nonterminals.<br/>
-`segmentation_model = parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmentation_eval_output_path , min_word_length_to_segment)`<br/>
+\# In addition to generating the segmentation model, the step generates a human-readable segmentation output that can be directly used as the prediction input for the evaluation scripts used in the Morpho-Challenge shared task.<br/>
+\# The <language> parameter is optional. If used, it should be the ISO-639-1 language code, and it only affects Turkish (for its special lowercasing and uppercasing).<br/>
+`segmentation_model = parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal, segmentation_eval_output_path , language, min_word_length_to_segment)`<br/>
 \# Segment a white-space tokenized text string.<br/>
-`segmented_text = segment_text(text_to_segment, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
+\# When both <split_marker> and <stem_marker> parameters are set to None, the function does only stemming.<br/>
+`segmented_text = segment_text(text_to_segment, segmentation_model, morph_separator, stem_marker, do_not_segment_nonfirst_capitalized_words, language , min_word_length_to_segment)`<br/>
 \# Segment a white-space tokenized text file.<br/>
-`segment_file(file_to_segment, output_path, segmentation_model, morph_separator, stem_marker, whether_to_ignore_segmenting_nonfirst_capitalized_words, min_word_length_to_segment)`<br/>
+\# When both <split_marker> and <stem_marker> parameters are set to None, the function does only stemming.<br/>
+`segment_file(file_to_segment, output_path, segmentation_model, morph_separator, stem_marker, do_not_segment_nonfirst_capitalized_words, language , min_word_length_to_segment)`<br/>
 
-#### Deductive Segmentation:
-Use this mode to segment any word (either seen or unseen in the training data).<br/>
-There are two ways to run deductive segmentation:
-- The first method is to run the same steps as the transductive segmentation above. If a word is seen in the training data, the segmentation is read from the PYAGS output. Otherwise, the segmentation is deduced through an MLE model that assigns the segmentation that gives the highest prefix, stem and suffix probabilities, along with valid prefix-suffix compatibility.
-- The second method is to convert the PYAGS output grammar to a format that is parsable by the CKY parser [here](http://web.science.mq.edu.au/~mjohnson/code/cky.tbz "here").
+#### Method2:
+\# Do regular grammar parsing.<br/>
 
 ##### Steps:
-\# Normalize the grammar output.<br/>
+\# Normalize the output grammar.<br/>
 `grammar = generate_grammar(pyags_output_grammar_path)`<br/>
 `write_grammar(grammar, final_grammar_path)`<br/>
-\# Apply the CKY parser.
+\# Apply some off-the-shelf CKY parser.
 
-#### Important Note:
-The segmentation model is only applicable when the prefixes, stems and suffixes are represented by three different nonterminals.
+
 
 ---
 

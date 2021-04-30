@@ -55,6 +55,31 @@ def sort_unique(sequence):
         print(ERROR_MESSAGE)
         return None
 
+def to_lower_case(text, language):
+    """
+    This function converts a given text into its lowercased form, with special handling for Turkish.
+    :param text: the text to lowercase
+    :param language: the language of the processed text (or None)
+    :return: lowercased text
+    """
+    if language and (language.lower() == "turkish" or language.upper() == "TUR"):
+        text = text.replace('I', 'ı')
+        text = text.replace('İ', 'i')
+    text = text.lower()
+    return text
+
+def to_upper_case(text, language):
+    """
+    This function converts a given text into its uppercased form, with special handling for Turkish.
+    :param text: the text to uppercase
+    :param language: the language of the processed text (or None)
+    :return: uppercased text
+    """
+    if language and (language.lower() == "turkish" or language.upper() == "TUR"):
+        text = text.replace('ı', 'I')
+        text = text.replace('i', 'İ')
+    text = text.upper()
+    return text
 
 def get_morphs_from_tree(tree, nonterminals):
     """
@@ -99,3 +124,6 @@ def get_morphs_from_tree(tree, nonterminals):
     except:
         print(ERROR_MESSAGE)
         return None
+
+def is_new_sentence(previous_word):
+    return not previous_word or re.match('^[\"\“\”\'\‘\’\`\′\՛\·\.\ㆍ\•\?\？\!\؟\。\፨\።\፧\—\‥\…]+$', previous_word)

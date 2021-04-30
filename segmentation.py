@@ -1,5 +1,4 @@
 import operator
-
 from utils import *
 from constants import *
 
@@ -64,7 +63,7 @@ def generate_grammar(grammar_output_path):
 
 
 def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem_nonterminal, suffix_nonterminal,
-                                normalized_segmentation_output_path, min_word_length_to_segment=3):
+                                normalized_segmentation_output_path, language, min_word_length_to_segment=3):
     """
     This function parses the output of a PYAGS segmentation output and generates
     a segmentation model that is used for the transductive and inductive segmentation
@@ -81,6 +80,8 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
     :param suffix_nonterminal: suffix nonterminal to parse
     :param normalized_segmentation_output_path: output path for the normalized segmentation
     compatible with evaluation utilities
+    :param language: the language of the processed text (or None). This is only needed for the special
+    lowercasing and uppercasing of Turkish.
     :param min_word_length_to_segment: integer that represents the minimum length of a
     word to be segmented (in characters)
     :return: a segmentation model: maps of normalized segmentation, morpheme counts, morpheme parsing
@@ -127,7 +128,7 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
                 complex_prefix_morphs_lower = ''
                 complex_suffix_lower = ''
                 complex_suffix_morphs_lower = ''
-                lower_complex_stem = ''
+                complex_stem_lower = ''
                 complex_stem_morphs_lower = ''
                 if stem_nonterminal == prefix_nonterminal and stem_nonterminal == suffix_nonterminal:
                     word += ''.join(morphs[stem_nonterminal])
@@ -136,10 +137,10 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
                     #Read the prefixes, and gather prefix information.
                     if prefix_nonterminal in morphs and len(morphs[prefix_nonterminal]) > 0:
                         complex_prefix = ''.join(morphs[prefix_nonterminal])
-                        complex_prefix_lower = complex_prefix.lower()
+                        complex_prefix_lower = to_lower_case(complex_prefix, language)
                         if complex_prefix_lower not in complex_nonterminal_compositions[PREFIX]:
                             complex_nonterminal_compositions[PREFIX][complex_prefix_lower] = defaultdict(int)
-                        complex_prefix_morphs_lower = ' '.join([morph.lower() for morph in morphs[prefix_nonterminal]])
+                        complex_prefix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[prefix_nonterminal]])
                         complex_nonterminal_compositions[PREFIX][complex_prefix_lower][complex_prefix_morphs_lower] += 1
                         complex_nonterminal_counts[PREFIX][complex_prefix_lower] += 1
                         word += complex_prefix
@@ -153,10 +154,10 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
                         if len(segmented_word) > 0:
                             segmented_word += ' '
                         complex_stem = ''.join(morphs[stem_nonterminal])
-                        complex_stem_lower = complex_stem.lower()
+                        complex_stem_lower = to_lower_case(complex_stem, language)
                         if complex_stem_lower not in complex_nonterminal_compositions[STEM]:
                             complex_nonterminal_compositions[STEM][complex_stem_lower] = defaultdict(int)
-                        complex_stem_morphs_lower = ' '.join([morph.lower() for morph in morphs[stem_nonterminal]])
+                        complex_stem_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[stem_nonterminal]])
                         complex_nonterminal_compositions[STEM][complex_stem_lower][complex_stem_morphs_lower] += 1
                         complex_nonterminal_counts[STEM][complex_stem_lower] += 1
                         word += complex_stem
@@ -167,10 +168,10 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
                         if len(segmented_word) > 0:
                             segmented_word += ' '
                         complex_suffix = ''.join(morphs[suffix_nonterminal])
-                        complex_suffix_lower = complex_suffix.lower()
+                        complex_suffix_lower = to_lower_case(complex_suffix, language)
                         if complex_suffix_lower not in complex_nonterminal_compositions[SUFFIX]:
                             complex_nonterminal_compositions[SUFFIX][complex_suffix_lower] = defaultdict(int)
-                        complex_suffix_morphs_lower = ' '.join([morph.lower() for morph in morphs[suffix_nonterminal]])
+                        complex_suffix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[suffix_nonterminal]])
                         complex_nonterminal_compositions[SUFFIX][complex_suffix_lower][complex_suffix_morphs_lower] += 1
                         complex_nonterminal_counts[SUFFIX][complex_suffix_lower] += 1
                         word += complex_suffix
@@ -179,13 +180,14 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
                         complex_suffix_lower = ''
                         complex_nonterminal_counts[SUFFIX][''] += 1
 
+                    #Record prefix-suffix compatibility.
                     if complex_prefix_lower not in prefix_suffix_compatibility:
                         prefix_suffix_compatibility[complex_prefix_lower] = []
                     if complex_suffix_lower not in prefix_suffix_compatibility[complex_prefix_lower]:
                         prefix_suffix_compatibility[complex_prefix_lower].append(complex_suffix_lower)
 
                     #Record segmentation information.
-                    word_lower = word.lower()
+                    word_lower = to_lower_case(word, language)
                     word_segmentation_lower_map[word_lower] = {}
                     word_segmentation_lower_map[word_lower][PREFIX] = complex_prefix_morphs_lower
                     word_segmentation_lower_map[word_lower][STEM] = complex_stem_morphs_lower
@@ -243,6 +245,8 @@ def insert_splits(word, count, split_marker, solutions):
         if count == 0 and word not in solutions:
             solutions.append(word)
             return solutions
+        if word in solutions:
+            return solutions
         #Add a "+" in all possible places
         for i in range(len(word)+1):
             #Construct new split.
@@ -259,17 +263,20 @@ def insert_splits(word, count, split_marker, solutions):
         return None
 
 
-def segment_text(text, segmentation_model, split_marker, stem_marker, ignore_nonfirst_capitalized_words, min_word_length_to_segment=3):
+def segment_text(text, segmentation_model, split_marker, stem_marker, do_not_segment_nonfirst_capitalized_words, language, min_word_length_to_segment=3):
     """
     This function morphologically segments a given text
     :param text: the text to be segmented
     :param segmentation_model: the segmentation model produced by 'parse_segmentation_output'
     :param split_marker: split_marker
-    :param stem_marker: a marker that surrounds the stem
-    :param ignore_nonfirst_capitalized_words: if True, the capitalized words that do not appear
+    :param stem_marker: a marker that surrounds the stem.
+    :param do_not_segment_nonfirst_capitalized_words: if True, the capitalized words that do not appear
     in the beginning of the text are not segmented.
+    :param language: the language of the processed text (or None). This is only needed for the special
+    lowercasing and uppercasing of Turkish.
     :param min_word_length_to_segment: integer that represents the minimum length of a
     word to be segmented (in characters)
+    Note: when both split_marker and stem_marker are set to None, the function does only stemming
     :return: segmented text
     """
 
@@ -283,16 +290,21 @@ def segment_text(text, segmentation_model, split_marker, stem_marker, ignore_non
         words = text.strip().split()
         segmented_words = [] #List containing all the segmented replacements of word in original line.
         #Segment word by word.
-        for index in range(len(words)):
-            word = words[index]
+        previous_word = None
+        for index, word in enumerate(words):
+            word_lower = to_lower_case(word, language)
+            segmented_word = None
             #If the word is too short, do not segment it.
             #If the word is capitalized and is not the first word, while ignore_nonfirst_capitalized_words=True, do not segment it.
-            if len(word) < min_word_length_to_segment or (index > 0 and word[0] != word[0].lower() and ignore_nonfirst_capitalized_words):
-                segmented_word = stem_marker+word+stem_marker
+            if len(word) != len(word_lower) or len(word) < min_word_length_to_segment or (not is_new_sentence(previous_word) and word[0] != word_lower[0] and do_not_segment_nonfirst_capitalized_words):
+                if not split_marker and not stem_marker:
+                    segmented_word = word
+                else:
+                    segmented_word = stem_marker+word+stem_marker
             else:
                 #Save the casing of all characters.
-                casing = [not ch.islower() for ch in word]
-                word_lower = word.lower()
+                casing = [ch != ch.lower() for ch in word]
+
                 #If the word already exists in the segmentation map, replace with existing segmentation.
                 analysis = {}
                 if word_lower in word_segmentation_map:
@@ -311,14 +323,12 @@ def segment_text(text, segmentation_model, split_marker, stem_marker, ignore_non
                         complex_prefix = segments[0]
                         complex_stem = segments[1]
                         complex_suffix = segments[2]
-
                         #Ignore words with unseen morphemes.
                         if complex_prefix not in complex_nonterminal_counts[PREFIX] or complex_stem not in complex_nonterminal_counts[STEM] or complex_suffix not in complex_nonterminal_counts[SUFFIX]:
                             continue
                         #Ignore words with incompatible prefix and suffix.
                         if complex_suffix not in prefix_suffix_compatibility[complex_prefix]:
                             continue
-
                         #Calculate the probability.
                         # score=p(segmentation)=count(prefix)/count_of_all_prefixes+count(stem)/count_of_all_stems+count(suffix)/count_of_all_suffixes
                         complex_prefix_prop = complex_nonterminal_counts[PREFIX][complex_prefix] / len(word_segmentation_map)
@@ -334,24 +344,31 @@ def segment_text(text, segmentation_model, split_marker, stem_marker, ignore_non
 
                 #Restore the actual casing.
                 index = 0
-                cased_analysis = analysis
+                cased_analysis = {}
                 for key in [PREFIX, STEM, SUFFIX]:
                     cased_morphs = []
                     for morph in analysis[key].split():
                         cased_morph = ''
                         for ch in morph:
                            if casing[index]:
-                               cased_morph += ch.upper()
+                               cased_morph += to_upper_case(ch, language)
                            else:
-                               cased_morph += ch
+                               cased_morph += to_lower_case(ch, language)
                            index += 1
                         cased_morphs.append(cased_morph)
                     cased_analysis[key] = ' '.join(cased_morphs)
 
                 #Format the final segmentation.
-                segmented_word = split_marker.join(cased_analysis[PREFIX].split()) +stem_marker+ split_marker.join(cased_analysis[STEM].split()) +stem_marker+ split_marker.join(cased_analysis[SUFFIX].split())
+                if not split_marker and not stem_marker:
+                    segmented_word = ''.join(cased_analysis[STEM].split())
+                else:
+                    split_prefixes = cased_analysis[PREFIX].split()
+                    split_stems = cased_analysis[STEM].split()
+                    split_suffixes = cased_analysis[SUFFIX].split()
+                    segmented_word = split_marker.join(split_prefixes) + stem_marker + split_marker.join(split_stems) + stem_marker + split_marker.join(split_suffixes)
 
             segmented_words.append(segmented_word)
+            previous_word = word
         segmented_text = ' '.join(segmented_words)
         return segmented_text
     except:
@@ -359,7 +376,7 @@ def segment_text(text, segmentation_model, split_marker, stem_marker, ignore_non
         return None
 
 
-def segment_file(input_path, output_path, segmentation_model, split_marker, stem_marker, ignore_nonfirst_capitalized_words, min_word_length_to_segment=3):
+def segment_file(input_path, output_path, segmentation_model, split_marker, stem_marker, do_not_segment_nonfirst_capitalized_words, language, min_word_length_to_segment=3, has_id=False):
     """
     This function morphologically segments a given file
     :param input_path: the input text file to segment
@@ -367,8 +384,12 @@ def segment_file(input_path, output_path, segmentation_model, split_marker, stem
     :param segmentation_model: the segmentation model produced by 'parse_segmentation_output'
     :param split_marker: split_marker
     :param stem_marker: a marker that surrounds the stem
-    :param ignore_nonfirst_capitalized_words: if True, the capitalized words that do not appear
+    :param do_not_segment_nonfirst_capitalized_words: if True, the capitalized words that do not appear
     in the beginning of the lines are not segmented.
+    :param language: the language of the processed text (or None). This is only needed for the special
+    lowercasing and uppercasing of Turkish.
+    :param has_id: whether the input file is a tabular one where the first column is an ID
+    that should not be segmented
     :param min_word_length_to_segment: integer that represents the minimum length of a
     word to be segmented (in characters)
     """
@@ -377,8 +398,14 @@ def segment_file(input_path, output_path, segmentation_model, split_marker, stem
         with open(output_path, "w", encoding='utf-8') as fout:
             with open(input_path, 'r', encoding="utf-8") as fin:
                 for line in fin:
-                    line = line.strip()
-                    segmented_line = segment_text(line, segmentation_model, split_marker, stem_marker, ignore_nonfirst_capitalized_words, min_word_length_to_segment)
-                    fout.write(segmented_line + '\n')
+                    text = line.strip()
+                    id = None
+                    if has_id:
+                        columns = text.split('\t')
+                        id = columns[0].strip()
+                        text = columns[1].strip()
+                    segmented_line = segment_text(text, segmentation_model, split_marker, stem_marker, do_not_segment_nonfirst_capitalized_words, language, min_word_length_to_segment)
+                    segmented_line = re.sub('\s+', ' ', segmented_line)
+                    fout.write(((id+'\t') if has_id else '') + segmented_line + '\n')
     except:
         print(ERROR_MESSAGE)
