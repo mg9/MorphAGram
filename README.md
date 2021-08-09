@@ -174,6 +174,6 @@ morph count, morph frequency, morph probability (the probability that a sequence
 
 #### 3. Feature Extraction
 \# Given a PYAGS segmentation output, this function extracts affix-relatred information that could then be used as ML features as pointed out [here](https://www.aclweb.org/anthology/W18-5808.pdf "here").<br/>
-\# For each simple prefix, complex prefix, simple suffix and complex suffix, the information includes: type count, token count, average count per word and average length.<br/>
+\# For each simple prefix, complex prefix, simple suffix and complex suffix, the information includes: type count, average count per word and average length.<br/>
 \# The function is only applicable when the prefixes and suffixes are represented by different nonterminals.<br/>
 `affix_info = get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_appearance_of_affix_to_consider)`<br/>

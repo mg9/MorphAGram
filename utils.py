@@ -46,7 +46,6 @@ def sort_unique(sequence):
     :param sequence: a list
     :return: sorted and unique elements
     """
-
     try:
         sequence.sort()
         seen = set()
@@ -62,6 +61,7 @@ def to_lower_case(text, language):
     :param language: the language of the processed text (or None)
     :return: lowercased text
     """
+
     if language and (language.lower() == "turkish" or language.upper() == "TUR"):
         text = text.replace('I', 'ı')
         text = text.replace('İ', 'i')
@@ -75,6 +75,7 @@ def to_upper_case(text, language):
     :param language: the language of the processed text (or None)
     :return: uppercased text
     """
+
     if language and (language.lower() == "turkish" or language.upper() == "TUR"):
         text = text.replace('ı', 'I')
         text = text.replace('i', 'İ')
@@ -83,25 +84,29 @@ def to_upper_case(text, language):
 
 def get_morphs_from_tree(tree, nonterminals):
     """
-    This function gets the different nonterminals from a morphological parse tree
+    This function gets the different nonterminals from a morphological parse tree.
     :param tree :a line in the segmentation output
     Example: "(Word (Prefix#110 ^^^ (Chars (Char fffe6200) (Chars (Char fffe6500))))
     (Stem#52 (Chars (Char fffe6300) (Chars (Char fffe6f00) (Chars (Char fffe6d00)))))
     (Suffix#1109 (Chars (Char fffe6500) (Chars (Char fffe7300))) $$$))
     :param nonterminals: nonterminals to patse
-    :return: a map of nonterminals and their terminal values (characters)
+    :return: a map of nonterminals and their terminal values (characters), an index-based
+    dictionary dictionary of segmentation nonterminals and an index-based dictionary of
+    segmentation-tokens
     """
 
     try:
         morphs = defaultdict(list)
         parts = tree.split()
+        tokens = {}
+        extracted_nonterminals = {}
         # Loop over each nonterminal.
         for nonterminal in set(nonterminals):
             read = False
             count = 0
             current_chars = []
             # Read the components of the current tree.
-            for part in parts:
+            for index, part in enumerate(parts):
                 if not read and re.match('^\(?' + nonterminal + '(#[0-9]+)?$', part):
                     read = True
                 # Read the characters.
@@ -117,13 +122,22 @@ def get_morphs_from_tree(tree, nonterminals):
                         if len(current_chars) > 0:
                             morph = ''.join(current_chars)
                             morphs[nonterminal].append(morph)
+                            extracted_nonterminals[index] = nonterminal
+                            tokens[index] = morph
                         read = False
                         count = 0
                         current_chars = []
-        return morphs
+        return morphs, extracted_nonterminals, tokens
     except:
         print(ERROR_MESSAGE)
-        return None
+        return None, None, None
 
 def is_new_sentence(previous_word):
+    """
+    This function runs heuristics to detect if a token starts a new sentence.
+    :param previous_word: the previous word to the underlying token
+    :return: True (new sentence) or False (not a new sentence0
+    """
     return not previous_word or re.match('^[\"\“\”\'\‘\’\`\′\՛\·\.\ㆍ\•\?\？\!\؟\。\፨\።\፧\—\‥\…]+$', previous_word)
+
+

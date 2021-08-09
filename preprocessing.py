@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from utils import *
 from constants import *
 
@@ -233,7 +231,7 @@ def get_top_affixes(segmentation_output_path, count, prefix_nonterminal, suffix_
             for line in fin:
                 line = line.strip()
                 #Search for a nonterminal match with a morph RegEx given as input.
-                morphs = get_morphs_from_tree(line, [prefix_nonterminal, suffix_nonterminal])
+                morphs, _, _ = get_morphs_from_tree(line, [prefix_nonterminal, suffix_nonterminal])
                 #Separate into respective affix counter.
                 for nonterminal in morphs:
                     for morph in  morphs[nonterminal]:
@@ -260,8 +258,14 @@ def get_top_affixes(segmentation_output_path, count, prefix_nonterminal, suffix_
         if len(prefix_list_sorted) == len(suffix_list_sorted) == 0:
             return n_affixes, prefix_x, suffix_y
 
+        #Get top affixes.
+        total_count = len(prefix_list_sorted) + len(suffix_list_sorted)
+        if count > total_count:
+            count = total_count
         while count > 0:
-            if len(prefix_list_sorted) > 0 and (len(suffix_list_sorted) == 0 or prefix_list_sorted[p][1] > suffix_list_sorted[s][1]):
+            if p == len(prefix_list_sorted) and s == len(suffix_list_sorted):
+                break
+            if len(prefix_list_sorted) > 0 and (len(suffix_list_sorted) == 0 or s == len(suffix_list_sorted) or prefix_list_sorted[p][1] > suffix_list_sorted[s][1]):
                 n_affixes.append(prefix_list_sorted[p][0])
                 prefix_x.append(prefix_list_sorted[p][0])
                 p += 1
@@ -270,7 +274,6 @@ def get_top_affixes(segmentation_output_path, count, prefix_nonterminal, suffix_
                 suffix_y.append(suffix_list_sorted[s][0])
                 s += 1
             count -= 1
-
         return n_affixes, prefix_x, suffix_y
     except:
         print(ERROR_MESSAGE)

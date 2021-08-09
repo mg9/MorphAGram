@@ -1,7 +1,100 @@
-from collections import defaultdict
-
 from utils import *
 from constants import *
+
+def get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_appearance=10):
+    """
+    This function generates affix-related features, used to run the ML classifiers for the selection
+    of the nearly optimal grammars.
+    This function is only applicable when the prefixes and suffixes are represented by different nonterminals.
+    :param segmentation_output_path: file containing grammar morph tree for each word
+    :param prefix_nonterminal: prefix nonterminal to search for
+    :param suffix_nonterminal: suffix nonterminal to search for
+    :param min_count: minimum count of the morph to be considered
+    :return: information for prefixes, suffixes, affixes, complex prefixes, complex suffixes and complex affixes
+    The information is: type count, token count, average count per word and average length
+    """
+
+    try:
+        word_count = 0
+
+        prefix_counter = defaultdict(int)
+        suffix_counter = defaultdict(int)
+        affix_counter = defaultdict(int)
+
+        complex_prefix_counter = defaultdict(int)
+        complex_suffix_counter = defaultdict(int)
+        complex_affix_counter = defaultdict(int)
+
+        with open(segmentation_output_path, 'r', encoding='utf-8') as fin:
+            for line in fin:
+                line = line.strip()
+                word_count += 1
+                #Search for a nonterminal match with a morph RegEx given as input.
+                morphs, _, _ = get_morphs_from_tree(line, [prefix_nonterminal, suffix_nonterminal])
+                #Separate into respective affix counter.
+                complex_prefix = ''
+                complex_suffix = ''
+                for nonterminal in morphs:
+                    #Record prefix, suffix and affix information.
+                    for morph in  morphs[nonterminal]:
+                        affix_counter[morph] += 1
+                        is_prefix = (nonterminal == prefix_nonterminal)
+                        if is_prefix:
+                            prefix_counter[morph] += 1
+                            complex_prefix += morph
+                        else:
+                            suffix_counter[morph] += 1
+                            complex_suffix += morph
+
+                #Record complex prefix, complex suffix and complex affix information.
+                if len(complex_prefix) > 0:
+                    complex_prefix_counter[complex_prefix] += 1
+                    complex_affix_counter[complex_prefix] += 1
+                if len(complex_suffix) > 0:
+                    complex_suffix_counter[complex_suffix] += 1
+                    complex_affix_counter[complex_suffix] += 1
+
+        #Prepare the final output.
+        output_dict = {PREFIX: analyze_morph_dict(prefix_counter, word_count, min_appearance),
+                       SUFFIX: analyze_morph_dict(suffix_counter, word_count, min_appearance),
+                       AFFIX: analyze_morph_dict(affix_counter, word_count, min_appearance),
+                       COMPLEX_PREFIX: analyze_morph_dict(complex_prefix_counter, word_count, min_appearance),
+                       COMPLEX_SUFFIX: analyze_morph_dict(complex_suffix_counter, word_count, min_appearance),
+                       COMPLEX_AFFIX: analyze_morph_dict(complex_affix_counter, word_count, min_appearance)}
+
+        return output_dict
+    except:
+        print(ERROR_MESSAGE)
+        return None
+
+def analyze_morph_dict(morph_dict, word_count, min_appearance):
+    """
+    This function gets affix-related features given an affix dictionary and word count
+    :param morph_dict: dictionary containing morphs and their counts
+    :param word_count: total number of words the morph information is generated from
+    :param min_count: minimum count of the morph to be considered
+    :return: overall information: type count, average count per word, average length
+    """
+
+    try:
+        type_count = 0
+        token_count = 0
+        average_length = 0
+        for key in morph_dict:
+            count = morph_dict[key]
+            if count < min_appearance:
+                continue
+            type_count += 1
+            token_count += count
+            average_length += len(key)
+        average_count_per_word = token_count/word_count
+        average_length = average_length/type_count
+        return {TYPE_COUNT: type_count,
+                AVERAGE_COUNT_PER_WORD: average_count_per_word,
+                AVERAGE_LENGTH: average_length}
+    except:
+        print(ERROR_MESSAGE)
+        return None
 
 def analyze_gold(gold_path):
     """
@@ -95,7 +188,6 @@ def analyze_gold(gold_path):
         print(ERROR_MESSAGE)
         return None, None
 
-
 def analyze_output(output_path, gold_path):
     """
     This function analyzes the performance of system segmentation given the gold.
@@ -150,8 +242,8 @@ def analyze_output(output_path, gold_path):
             precision = (morph_common_counts[morph] / morph_output_counts[morph])  if (morph in morph_common_counts and morph in morph_output_counts and morph_output_counts[morph] > 0) else 0
             recall = (morph_common_counts[morph] / morph_gold_counts[morph])  if (morph in morph_common_counts and morph in morph_gold_counts and morph_gold_counts[morph] > 0) else 0
             f1score = (2*recall*precision/(recall+precision)) if recall+precision > 0 else 0
-            morph_info[morph][PRECISION] = recall
-            morph_info[morph][RECALL] = precision
+            morph_info[morph][PRECISION] = precision
+            morph_info[morph][RECALL] = recall
             morph_info[morph][F1SCORE] = f1score
 
         return morph_info
@@ -159,100 +251,3 @@ def analyze_output(output_path, gold_path):
         print(ERROR_MESSAGE)
         return None
 
-
-def get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_appearance=10):
-    """
-    This function generates affix-related features, used to run the ML classifiers for the selection
-    of the nearly optimal grammars.
-    This function is only applicable when the prefixes and suffixes are represented by different nonterminals.
-    :param segmentation_output_path: file containing grammar morph tree for each word
-    :param prefix_nonterminal: prefix nonterminal to search for
-    :param suffix_nonterminal: suffix nonterminal to search for
-    :param min_count: minimum count of the morph to be considered
-    :return: information for prefixes, suffixes, affixes, complex prefixes, complex suffixes and complex affixes
-    The information is: type count, token count, average count per word and average length
-    """
-
-    try:
-        word_count = 0
-
-        prefix_counter = defaultdict(int)
-        suffix_counter = defaultdict(int)
-        affix_counter = defaultdict(int)
-
-        complex_prefix_counter = defaultdict(int)
-        complex_suffix_counter = defaultdict(int)
-        complex_affix_counter = defaultdict(int)
-
-        with open(segmentation_output_path, 'r', encoding='utf-8') as fin:
-            for line in fin:
-                line = line.strip()
-                word_count += 1
-                #Search for a nonterminal match with a morph RegEx given as input.
-                morphs = get_morphs_from_tree(line, [prefix_nonterminal, suffix_nonterminal])
-                #Separate into respective affix counter.
-                complex_prefix = ''
-                complex_suffix = ''
-                for nonterminal in morphs:
-                    #Record prefix, suffix and affix information.
-                    for morph in  morphs[nonterminal]:
-                        affix_counter[morph] += 1
-                        is_prefix = (nonterminal == prefix_nonterminal)
-                        if is_prefix:
-                            prefix_counter[morph] += 1
-                            complex_prefix += morph
-                        else:
-                            suffix_counter[morph] += 1
-                            complex_suffix += morph
-
-                #Record complex prefix, complex suffix and complex affix information.
-                if len(complex_prefix) > 0:
-                    complex_prefix_counter[complex_prefix] += 1
-                    complex_affix_counter[complex_prefix] += 1
-                if len(complex_suffix) > 0:
-                    complex_suffix_counter[complex_suffix] += 1
-                    complex_affix_counter[complex_suffix] += 1
-
-        #Prepare the final output.
-        output_dict = {PREFIX: analyze_morph_dict(prefix_counter, word_count, min_appearance),
-                       SUFFIX: analyze_morph_dict(suffix_counter, word_count, min_appearance),
-                       AFFIX: analyze_morph_dict(affix_counter, word_count, min_appearance),
-                       COMPLEX_PREFIX: analyze_morph_dict(complex_prefix_counter, word_count, min_appearance),
-                       COMPLEX_SUFFIX: analyze_morph_dict(complex_suffix_counter, word_count, min_appearance),
-                       COMPLEX_AFFIX: analyze_morph_dict(complex_affix_counter, word_count, min_appearance)}
-
-        return output_dict
-    except:
-        print(ERROR_MESSAGE)
-        return None
-
-
-def analyze_morph_dict(morph_dict, word_count, min_appearance):
-    """
-    This function gets affix-related features given an affix dictionary and word count
-    :param morph_dict: dictionary containing morphs and their counts
-    :param word_count: total number of words the morph information is generated from
-    :param min_count: minimum count of the morph to be considered
-    :return: overall information: type count, token count, average count per word, average length
-    """
-
-    try:
-        type_count = 0
-        token_count = 0
-        average_length = 0
-        for key in morph_dict:
-            count = morph_dict[key]
-            if count < min_appearance:
-                continue
-            type_count += 1
-            token_count += count
-            average_length += len(key)
-        average_count_per_word = token_count/word_count
-        average_length = average_length/type_count
-        return {TYPE_COUNT: type_count,
-                TOKEN_COUNT: token_count,
-                AVERAGE_COUNT_PER_WORD: average_count_per_word,
-                AVERAGE_LENGTH: average_length}
-    except:
-        print(ERROR_MESSAGE)
-        return None

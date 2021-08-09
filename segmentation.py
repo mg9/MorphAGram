@@ -1,4 +1,7 @@
 import operator
+import collections
+from itertools import groupby
+
 from utils import *
 from constants import *
 
@@ -89,7 +92,6 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
     If the nonterminals for the prefixes, stems and suffixes are the same (e.g., 'Morph' or 'Compound'),
     the maps for morpheme counts, morpheme parsing and prefix-suffix compatibility are void
     """
-
     try:
         if not ((stem_nonterminal == prefix_nonterminal and stem_nonterminal == suffix_nonterminal) or
             (stem_nonterminal != prefix_nonterminal and stem_nonterminal != suffix_nonterminal and prefix_nonterminal != suffix_nonterminal)):
@@ -118,80 +120,99 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
         with open(segmentation_output_path, 'r', encoding='utf-8') as fin:
             for line in fin:
                 line = line.strip()
+
+                #----------------------------------------------------
+                #Special handling for flipped prefixes and suffixes caused by ambiguous grammars
+                #This handles AD-HOC nonerminals: Prefix, Stem, Suffix and their combinations (e.g., StemPrefix).
+                #if re.match('^.*Suffix.*Char.*Stem.*$', line) or re.match('^.*Stem.*Char.*Prefix.*$', line) or re.match('^.*Suffix.*Char.*Prefix.*$', line):
+                #    line = fix_output_line(line)
+                #----------------------------------------------------
+
                 if len(line) == 0:
                     continue;
+
                 #Extract the morphemes given the nonterminals.
-                morphs = get_morphs_from_tree(line, [prefix_nonterminal, stem_nonterminal, suffix_nonterminal])
+                morphs, extracted_nonterminals, tokens = get_morphs_from_tree(line, [prefix_nonterminal, stem_nonterminal, suffix_nonterminal])
+
+                #Check that the extracted morphemes are in the correct order
+                ordered_extracted_nonterminals = list(collections.OrderedDict(sorted(extracted_nonterminals.items())).values())
+                ordered_extracted_nonterminals = [x[0] for x in groupby(ordered_extracted_nonterminals)]
+                original_nonterminals = [prefix_nonterminal, stem_nonterminal, suffix_nonterminal]
+                original_nonterminals = [x[0] for x in groupby(original_nonterminals)]
+                correct_order= ' '.join(ordered_extracted_nonterminals) in ' '.join(original_nonterminals)
+
                 word = ''
                 segmented_word = ''
-                complex_prefix_lower = ''
-                complex_prefix_morphs_lower = ''
-                complex_suffix_lower = ''
-                complex_suffix_morphs_lower = ''
-                complex_stem_lower = ''
-                complex_stem_morphs_lower = ''
-                if stem_nonterminal == prefix_nonterminal and stem_nonterminal == suffix_nonterminal:
-                    word += ''.join(morphs[stem_nonterminal])
-                    segmented_word += ' '.join(morphs[stem_nonterminal])
+                if not correct_order:
+                    ordered_tokens = list(collections.OrderedDict(sorted(tokens.items())).values())
+                    word = ''.join(ordered_tokens)
+                    segmented_word = ' '.join(ordered_tokens)
                 else:
-                    #Read the prefixes, and gather prefix information.
-                    if prefix_nonterminal in morphs and len(morphs[prefix_nonterminal]) > 0:
-                        complex_prefix = ''.join(morphs[prefix_nonterminal])
-                        complex_prefix_lower = to_lower_case(complex_prefix, language)
-                        if complex_prefix_lower not in complex_nonterminal_compositions[PREFIX]:
-                            complex_nonterminal_compositions[PREFIX][complex_prefix_lower] = defaultdict(int)
-                        complex_prefix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[prefix_nonterminal]])
-                        complex_nonterminal_compositions[PREFIX][complex_prefix_lower][complex_prefix_morphs_lower] += 1
-                        complex_nonterminal_counts[PREFIX][complex_prefix_lower] += 1
-                        word += complex_prefix
-                        segmented_word += ' '.join(morphs[prefix_nonterminal])
-                    else:
-                        complex_prefix_lower = ''
-                        complex_nonterminal_counts[PREFIX][''] += 1
-
-                    #Read the stems, and gather stem information.
-                    if stem_nonterminal in morphs and len(morphs[stem_nonterminal]) > 0:
-                        if len(segmented_word) > 0:
-                            segmented_word += ' '
-                        complex_stem = ''.join(morphs[stem_nonterminal])
-                        complex_stem_lower = to_lower_case(complex_stem, language)
-                        if complex_stem_lower not in complex_nonterminal_compositions[STEM]:
-                            complex_nonterminal_compositions[STEM][complex_stem_lower] = defaultdict(int)
-                        complex_stem_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[stem_nonterminal]])
-                        complex_nonterminal_compositions[STEM][complex_stem_lower][complex_stem_morphs_lower] += 1
-                        complex_nonterminal_counts[STEM][complex_stem_lower] += 1
-                        word += complex_stem
+                    complex_prefix_lower = ''
+                    complex_prefix_morphs_lower = ''
+                    complex_suffix_lower = ''
+                    complex_suffix_morphs_lower = ''
+                    complex_stem_lower = ''
+                    complex_stem_morphs_lower = ''
+                    if stem_nonterminal == prefix_nonterminal and stem_nonterminal == suffix_nonterminal:
+                        word += ''.join(morphs[stem_nonterminal])
                         segmented_word += ' '.join(morphs[stem_nonterminal])
-
-                    #Read the suffixes, and gather suffix information.
-                    if suffix_nonterminal in morphs and len(morphs[suffix_nonterminal]) > 0:
-                        if len(segmented_word) > 0:
-                            segmented_word += ' '
-                        complex_suffix = ''.join(morphs[suffix_nonterminal])
-                        complex_suffix_lower = to_lower_case(complex_suffix, language)
-                        if complex_suffix_lower not in complex_nonterminal_compositions[SUFFIX]:
-                            complex_nonterminal_compositions[SUFFIX][complex_suffix_lower] = defaultdict(int)
-                        complex_suffix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[suffix_nonterminal]])
-                        complex_nonterminal_compositions[SUFFIX][complex_suffix_lower][complex_suffix_morphs_lower] += 1
-                        complex_nonterminal_counts[SUFFIX][complex_suffix_lower] += 1
-                        word += complex_suffix
-                        segmented_word += ' '.join(morphs[suffix_nonterminal])
                     else:
-                        complex_suffix_lower = ''
-                        complex_nonterminal_counts[SUFFIX][''] += 1
+                        #Read the prefixes, and gather prefix information.
+                        if prefix_nonterminal in morphs and len(morphs[prefix_nonterminal]) > 0:
+                            complex_prefix = ''.join(morphs[prefix_nonterminal])
+                            complex_prefix_lower = to_lower_case(complex_prefix, language)
+                            if complex_prefix_lower not in complex_nonterminal_compositions[PREFIX]:
+                                complex_nonterminal_compositions[PREFIX][complex_prefix_lower] = defaultdict(int)
+                            complex_prefix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[prefix_nonterminal]])
+                            complex_nonterminal_compositions[PREFIX][complex_prefix_lower][complex_prefix_morphs_lower] += 1
+                            complex_nonterminal_counts[PREFIX][complex_prefix_lower] += 1
+                            word += complex_prefix
+                            segmented_word += ' '.join(morphs[prefix_nonterminal])
+                        else:
+                            complex_prefix_lower = ''
+                            complex_nonterminal_counts[PREFIX][''] += 1
+                        #Read the stems, and gather stem information.
+                        if stem_nonterminal in morphs and len(morphs[stem_nonterminal]) > 0:
+                            if len(segmented_word) > 0:
+                                segmented_word += ' '
+                            complex_stem = ''.join(morphs[stem_nonterminal])
+                            complex_stem_lower = to_lower_case(complex_stem, language)
+                            if complex_stem_lower not in complex_nonterminal_compositions[STEM]:
+                                complex_nonterminal_compositions[STEM][complex_stem_lower] = defaultdict(int)
+                            complex_stem_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[stem_nonterminal]])
+                            complex_nonterminal_compositions[STEM][complex_stem_lower][complex_stem_morphs_lower] += 1
+                            complex_nonterminal_counts[STEM][complex_stem_lower] += 1
+                            word += complex_stem
+                            segmented_word += ' '.join(morphs[stem_nonterminal])
+                        #Read the suffixes, and gather suffix information.
+                        if suffix_nonterminal in morphs and len(morphs[suffix_nonterminal]) > 0:
+                            if len(segmented_word) > 0:
+                                segmented_word += ' '
+                            complex_suffix = ''.join(morphs[suffix_nonterminal])
+                            complex_suffix_lower = to_lower_case(complex_suffix, language)
+                            if complex_suffix_lower not in complex_nonterminal_compositions[SUFFIX]:
+                                complex_nonterminal_compositions[SUFFIX][complex_suffix_lower] = defaultdict(int)
+                            complex_suffix_morphs_lower = ' '.join([to_lower_case(morph, language) for morph in morphs[suffix_nonterminal]])
+                            complex_nonterminal_compositions[SUFFIX][complex_suffix_lower][complex_suffix_morphs_lower] += 1
+                            complex_nonterminal_counts[SUFFIX][complex_suffix_lower] += 1
+                            word += complex_suffix
+                            segmented_word += ' '.join(morphs[suffix_nonterminal])
+                        else:
+                            complex_suffix_lower = ''
+                            complex_nonterminal_counts[SUFFIX][''] += 1
+                        #Record prefix-suffix compatibility.
+                        if complex_prefix_lower not in prefix_suffix_compatibility:
+                            prefix_suffix_compatibility[complex_prefix_lower] = []
+                        if complex_suffix_lower not in prefix_suffix_compatibility[complex_prefix_lower]:
+                            prefix_suffix_compatibility[complex_prefix_lower].append(complex_suffix_lower)
 
-                    #Record prefix-suffix compatibility.
-                    if complex_prefix_lower not in prefix_suffix_compatibility:
-                        prefix_suffix_compatibility[complex_prefix_lower] = []
-                    if complex_suffix_lower not in prefix_suffix_compatibility[complex_prefix_lower]:
-                        prefix_suffix_compatibility[complex_prefix_lower].append(complex_suffix_lower)
-
-                    #Record segmentation information.
-                    word_lower = to_lower_case(word, language)
-                    word_segmentation_lower_map[word_lower] = {}
-                    word_segmentation_lower_map[word_lower][PREFIX] = complex_prefix_morphs_lower
-                    word_segmentation_lower_map[word_lower][STEM] = complex_stem_morphs_lower
-                    word_segmentation_lower_map[word_lower][SUFFIX] = complex_suffix_morphs_lower
+                        #Record segmentation information.
+                        word_lower = to_lower_case(word, language)
+                        word_segmentation_lower_map[word_lower] = {}
+                        word_segmentation_lower_map[word_lower][PREFIX] = complex_prefix_morphs_lower
+                        word_segmentation_lower_map[word_lower][STEM] = complex_stem_morphs_lower
+                        word_segmentation_lower_map[word_lower][SUFFIX] = complex_suffix_morphs_lower
 
                 #Do not segment too short words.
                 if len(word) < min_word_length_to_segment:
@@ -207,8 +228,8 @@ def parse_segmentation_output(segmentation_output_path, prefix_nonterminal, stem
 
         segmentation_model = (word_segmentation_lower_map, complex_nonterminal_counts, complex_nonterminal_compositions, prefix_suffix_compatibility)
         return segmentation_model
+
     except:
-        print(ERROR_MESSAGE)
         return None
 
 
@@ -366,7 +387,10 @@ def segment_text(text, segmentation_model, split_marker, stem_marker, do_not_seg
                     split_stems = cased_analysis[STEM].split()
                     split_suffixes = cased_analysis[SUFFIX].split()
                     segmented_word = split_marker.join(split_prefixes) + stem_marker + split_marker.join(split_stems) + stem_marker + split_marker.join(split_suffixes)
+                    segmented_word = segmented_word
 
+            segmented_word = segmented_word.strip()
+            segmented_word = re.sub('\s+', ' ', segmented_word)
             segmented_words.append(segmented_word)
             previous_word = word
         segmented_text = ' '.join(segmented_words)
@@ -405,7 +429,6 @@ def segment_file(input_path, output_path, segmentation_model, split_marker, stem
                         id = columns[0].strip()
                         text = columns[1].strip()
                     segmented_line = segment_text(text, segmentation_model, split_marker, stem_marker, do_not_segment_nonfirst_capitalized_words, language, min_word_length_to_segment)
-                    segmented_line = re.sub('\s+', ' ', segmented_line)
                     fout.write(((id+'\t') if has_id else '') + segmented_line + '\n')
     except:
         print(ERROR_MESSAGE)
