@@ -1,5 +1,5 @@
 ##  MorphAGram: A Framework for Unsupervised and Semi-Supervised Morphological Segmentation using Adaptor Grammars ##
-##### Version: 1.0
+##### Version: 1.5
 <br/>
 
 ### Publications
@@ -28,7 +28,7 @@ MorphAGram uses the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mar
 
 For complete information about how the sampler works, see [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
 
-The sampler requires two types of inputs: a grammar and a list of training units. For the purpose of morphological segmentation, a grammar should specify word structure, while the list of training units is a list of words (a lexicon). On the other side, MorphAGram requires the text to be in the Hex format in order to meet the language-independence assumption and to escape special characters. Also the grammar should have the characters that form the input words as terminals.
+The sampler requires two types of inputs: a grammar and a list of training units. For the purpose of morphological segmentation, a grammar should specify word structure, while the list of training units is a list of words (a lexicon). On the other hand, MorphAGram requires the text to be in the Hex format in order to meet the language-independence assumption and to escape special characters. Also the grammar should have the characters that form the input words as terminals.
 
 The first step is to provide an initial CFG (Context-Free grammar) and a list of words (one word per line) to MorphAGram, which in turn converts them into inputs to PYAGS. The initial CFG should have two parameters associated with each production rule (default values are zeros). The first number represents the value of the probability of the rule in the generator, and the second number is the value of the α parameter in the Pitman-Yor process. Below is an example CFG.
 
@@ -115,7 +115,7 @@ The cascaded setup approximates the effect of the scholar-seeded setup in a lang
 
 Download and run the Pitman-Yor Adaptor-Grammar Sampler (PYAGS), developed by Mark Johnson, where the input to the sampler is the output of the preprocessing phase. The sampler can be downloaded from [here](http://web.science.mq.edu.au/~mjohnson/code/py-cfg-2013-09-23.tgz "here").
 
-In order to replicare our results in [MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation](https://www.aclweb.org/anthology/2020.lrec-1.879.pdf "MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation"), please use the following parameters:
+In order to replicate our results in [MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation](https://www.aclweb.org/anthology/2020.lrec-1.879.pdf "MorphAGram, Evaluation and Framework for Unsupervised Morphological Segmentation"), please use the following parameters:
 `-r 0 -d 10 -x 10 -D -E -e 1 -f 1 -g 10 -h 0.1 -w 1 -T 1 -m 0 -n 500 -R`
 
 For complete information about how the sampler works, see [paper](https://cocosci.princeton.edu/tom/papers/adaptornips.pdf "paper").
@@ -126,7 +126,7 @@ For complete information about how the sampler works, see [paper](https://cocosc
 
 #### Method1:
 \# If a word is seen in the training data, its segmentation is read from the segmentation output of the learning process.<br/>
-\# If a word is not seen in the training data, it's analyzed by finding the split that gives the highest MLE probability across its morphemes, along with the selection of compatible prefixes and suffixes. The information of the morphemes and their MLE probabilities and compatibility are driven from the the segmentation output of the learning process.
+\# If a word is not seen in the training data, it's analyzed by finding the split that gives the highest MLE probability across its morphemes, along with the selection of compatible prefixes and suffixes. The information of the morphemes and their MLE probabilities and compatibility are driven from the segmentation output of the learning process.
 \# This method is applicable only when the prefixes, stems and suffixes are represented by three different nonterminals.
 
 ##### Steps:
@@ -173,7 +173,8 @@ morph count, morph frequency, morph probability (the probability that a sequence
 `morph_info = analyze_gold(output_path, gold_path)`<br/>
 
 #### 3. Feature Extraction
-\# Given a PYAGS segmentation output, this function extracts affix-relatred information that could then be used as ML features as pointed out [here](https://www.aclweb.org/anthology/W18-5808.pdf "here").<br/>
+\# Given a PYAGS segmentation output, this function extracts affix-related information that could then be used as ML features as pointed out [here](https://www.aclweb.org/anthology/W18-5808.pdf "here").<br/>
 \# For each simple prefix, complex prefix, simple suffix and complex suffix, the information includes: type count, average count per word and average length.<br/>
 \# The function is only applicable when the prefixes and suffixes are represented by different nonterminals.<br/>
 `affix_info = get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_appearance_of_affix_to_consider)`<br/>
+
