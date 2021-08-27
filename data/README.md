@@ -11,15 +11,15 @@ X6: Seeded Suffix Nonterminal
 
 | Grammar | X1 | X2 | X3 | X4 | X5 | X6 |
 | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ | ------------ |
-| PrStSu | 0 | PrefixMorphs | Stem | SuffixMorphs | PrefixMorph | SuffixMorph | 
+| PrStSu | 0 | PrefixMorph | Stem | SuffixMorph | PrefixMorph | SuffixMorph | 
 | PrStSu+SM | 1 | PrefixMorph | Stem | SuffixMorph | PrefixMorph | SuffixMorph |
-| PrStSu+Co+SM | 2 | Compound | Compound | Compound | PrefixMorph | SuffixMorph |
+| PrStSu+Co+SM | 2 | PrefixMorphs | Stem | SuffixMorphs | PrefixMorph | SuffixMorph |
 | Simple | 3 | Prefix | Stem | Suffix | Prefix | Suffix |
 | Simple+SM | 4 | Prefix | Stem | Suffix | Prefix | Suffix |
 | Morph+SM | 13 | Morph | Morph | Morph | Morph | Morph |
 | PrStSu2a+SM | 15 | PrefixMorph | Stem | SuffixMorph | PrefixMorph | SuffixMorph |
-| PrStSu2b+SM | 18 | PrefixMorphs | Stem | SuffixMorphs | PrefixMorph | SuffixMorph |
-| PrStSu2b+Co+SM | 19 | Compound | Compound | Compound | PrefixMorph | SuffixMorph |
+| PrStSu2b+SM | 18 | PrefixMorph | Stem | SuffixMorph | PrefixMorph | SuffixMorph |
+| PrStSu2b+Co+SM | 19 | PrefixMorphs | Stem | SuffixMorphs | PrefixMorph | SuffixMorph |
 
 <br />
 
