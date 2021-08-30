@@ -50,10 +50,10 @@ SubMorph --> Chars<br/>
 1 1 Chars --> Char<br/>
 1 1 Chars --> Char Chars*
 
-MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  Here is how to preprocess the data for each setup:
+MorphAGram has three learning settings; Standard, Scholar-Seeded and Cascaded.  Here is how to preprocess the data for each setting:
 
-#### a) Standard Setup
-The standard setup is a language-independent one, with no scholar knowledge and with only one learning phase.
+#### a) Standard Setting
+The Standard setting is a language-independent one, with no scholar knowledge and with only one learning phase.
 
 ##### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
@@ -66,8 +66,8 @@ The standard setup is a language-independent one, with no scholar knowledge and 
 `write_grammar(appended_grammar, final_grammar_path)`<br/>
 
 
-#### b) Scholar-Seeded Setup
-The scholar-seeded setup seeds scholar information in the form of prefixes and suffixes into the grammar tree prior to running the learning phase. The setup first requires the preparation of an LK file (LK=Linguistic Knowledge). An example LK file is shown below, where it may contain any number of prefixes and suffixes.
+#### b) Scholar-Seeded Setting
+The Scholar-Seeded setting seeds scholar information in the form of prefixes and suffixes into the grammar tree prior to running the learning phase. The setting first requires the preparation of an LK file (LK=Linguistic Knowledge). An example LK file is shown below, where it may contain any number of prefixes and suffixes.
 
 *###PREFIXES###*<br/>
 *prefix1*<br/>
@@ -92,8 +92,8 @@ The scholar-seeded setup seeds scholar information in the form of prefixes and s
 `appended_ss_grammar = add_chars_to_grammar(ss_grammar, hex_chars)`<br/>
 `write_grammar(appended_ss_grammar, final_grammar_path)`<br/>
 
-#### c) Cascaded Setup
-The cascaded setup approximates the effect of the scholar-seeded setup in a language-independent manner, where the seeded affixes are automatically  generated in one learning phase and then seeded into the grammar tree in a second round of learning.
+#### c) Cascaded Setting
+The cascaded setting approximates the effect of the Scholar-Seeded setting in a language-independent manner, where the seeded affixes are automatically  generated in one learning phase and then seeded into the grammar tree in a second round of learning.
 
 ##### Steps:
 \# Read the initial lexicon (word list), and convert it into Hex.<br/>
@@ -152,6 +152,21 @@ For complete information about how the sampler works, see [paper](https://cocosc
 \# Apply some off-the-shelf CKY parser.
 
 
+
+---
+
+### Automatic Tailoring of Grammars
+
+#### 1. Standard vs. Cascaded
+
+For a language with no segmentation data available, we recommend running the best on-average performing grammar (PrStSu+SM|index=1 in the data directory). For the selection between the Standard and Cascaded settings, use the `standard_cascaded_classification.py` script as follows:
+`python standard_cascaded_classification.py ap_sc.model segmentation_output_path prefix_nonterminal suffix_nonterminal`
+where <segmentation_output_path> is recommended to be based on a quick sampling process of 50 iterations using the PrStSu+SM grammar. 
+
+#### 2. Scholar_Seeded
+
+For the selection of the best Scholar-Seeded grammar, choose the one that produces the largest number of affixes in common with those provided as linguistic knowledge. In order to get the number of matches, use the `scholar_seeded_matcher.py` script as follows:
+`python scholar_seeded_matcher.py linguistic_knowledge_path egmentation_output_path prefix_nonterminal suffix_nonterminal`
 
 ---
 
