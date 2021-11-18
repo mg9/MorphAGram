@@ -193,3 +193,7 @@ morph count, morph frequency, morph probability (the probability that a sequence
 \# The function is only applicable when the prefixes and suffixes are represented by different nonterminals.<br/>
 `affix_info = get_affix_features(segmentation_output_path, prefix_nonterminal, suffix_nonterminal, min_appearance_of_affix_to_consider)`<br/>
 
+### Acknowledgement
+  
+  This research is based upon work supported by the Intelligence Advanced Research Projects Activity (IARPA), (contract FA8650-17-C-9117). The views and conclusions herein are those of the authors and should not be interpreted as necessarily representing official policies, ex-pressed or implied, of ODNI, IARPA, or the U.S. Government. The U.S. Government is authorized to reproduce and distribute reprints for governmental purposes
+notwithstanding any copy-right annotation therein.
